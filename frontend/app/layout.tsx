@@ -24,18 +24,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* Full-page grid: sidebar + main content */}
-        <div className="h-screen grid grid-cols-[300px_1fr] overflow-hidden">
+      <body className="antialiased">
+        {/* Gradient as global background */}
+        <div className="h-screen grid grid-cols-[300px_1fr] overflow-hidden bg-[radial-gradient(circle_at_15%_5%,_#3a3a4a_0%,_#1a1a1a_10%,_#000814_50%,_#000815_100%)]">
+          {/* Sidebar glass */}
           <Sidebar />
 
-          {/* Main content flex column */}
-          <main className="flex flex-col p-6 overflow-auto">
+          {/* Main content (transparent container on top of gradient) */}
+          <main className="flex flex-col p-6 overflow-auto bg-transparent">
             {children}
           </main>
         </div>
@@ -43,3 +41,5 @@ export default function RootLayout({
     </html>
   )
 }
+
+

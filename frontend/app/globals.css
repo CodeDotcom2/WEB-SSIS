@@ -112,6 +112,17 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+.glass {
+  @apply backdrop-blur-md bg-white/3 shadow-lg border border-white/10;
+}
+
+.glass2 {
+  @apply backdrop-blur-3xl bg-white/3 shadow-lg border border-white/10;
+}
+
+
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

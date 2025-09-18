@@ -55,52 +55,52 @@ export default function ProgramsPage() {
 
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold">Manage Programs</h1>
+          <h1 className="text-white text-3xl font-bold">Manage Programs</h1>
 
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search program..."
-              className="border rounded-lg pl-10 pr-4 py-2 w-full"
+              className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
             />
           </div>
         </div>
 
-        <div className="flex bg-gray-100 rounded-lg gap-3 p-4 items-center">
+        <div className="flex glass rounded-lg gap-3 p-4 items-center">
           <AddProgramDialog />
           <Button variant="blue" size="lg">Delete Student</Button>
           <Button variant="blue" size="lg">Edit Student</Button>
         </div>
 
-        <div className="flex-1 bg-gray-100 rounded-lg overflow-auto p-4">
+        <div className="flex-1 glass rounded-lg overflow-auto p-4">
           <Table className="w-full table-auto">
             <TableCaption>All Program</TableCaption>
             <TableHeader>
 
               <TableRow>
-                <TableHead>Program Code</TableHead>
-                <TableHead>Program Name</TableHead>
-                <TableHead>College Code</TableHead>
-                <TableHead>Number of Students</TableHead>
+                <TableHead className="!text-slate-50">Program Code</TableHead>
+                <TableHead className="!text-slate-50">Program Name</TableHead>
+                <TableHead className="!text-slate-50">College Code</TableHead>
+                <TableHead className="!text-slate-50">Number of Students</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow className="border-0">
                   <TableCell colSpan={4}>Loading...</TableCell>
                 </TableRow>
               ) : (
                 programs.map((p, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{p.code}</TableCell>
-                    <TableCell>{p.name}</TableCell>
-                    <TableCell>{p.college_code}</TableCell>
-                    <TableCell>{p.num_students}</TableCell>
+                  <TableRow key={i} className="border-0">
+                    <TableCell className="text-slate-200">{p.code}</TableCell>
+                    <TableCell className="text-slate-200">{p.name}</TableCell>
+                    <TableCell className="text-slate-200">{p.college_code}</TableCell>
+                    <TableCell className="text-slate-200">{p.num_students}</TableCell>
                   </TableRow>
                 ))
               )}

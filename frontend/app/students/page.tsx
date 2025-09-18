@@ -56,59 +56,54 @@ export default function StudentsPage() {
   }, [])
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold">Manage Students</h1>
+          <h1 className="text-white text-3xl font-bold">Manage Students</h1>
 
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search students..."
-              className="border rounded-lg pl-10 pr-4 py-2 w-full"
+              className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
             />
           </div>
         </div>
 
-        <div className="flex bg-gray-100 rounded-lg gap-3 p-4 items-center">
+        <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
           <AddStudentDialog />
           <Button variant="blue" size="lg">Delete Student</Button>
           <Button variant="blue" size="lg">Edit Student</Button>
         </div>
 
-        <div className="flex-1 bg-gray-100 rounded-lg overflow-auto p-4">
-          <Table className="w-full table-auto">
-            <TableCaption>All Students</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead colSpan={6}>
-                  <div className="flex gap-7 mb-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm">
-                        {sortBy}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setSortBy("ID Number")}>
-                          ID Number
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("Last Name")}>
-                          Last Name
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("First Name")}>
-                          First Name
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("Year Level")}>
-                          Year Level
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("Program")}>
-                          Program
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+        <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
+            <div className="flex gap-7 mb-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                    {sortBy}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setSortBy("ID Number")}>
+                      ID Number
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Last Name")}>
+                      Last Name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("First Name")}>
+                      First Name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Year Level")}>
+                      Year Level
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("Program")}>
+                      Program
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm">
+                      <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                         {order}
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
@@ -121,33 +116,34 @@ export default function StudentsPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </TableHead>
-              </TableRow>
+          <Table className="w-full table-auto border-collapse">
+            <TableCaption>All Students</TableCaption>
+            <TableHeader>
 
               <TableRow>
-                <TableHead>ID No.</TableHead>
-                <TableHead>First Name</TableHead>
-                <TableHead>Last Name</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Year Level</TableHead>
-                <TableHead>Program</TableHead>
+                <TableHead className="!text-slate-50">ID No.</TableHead>
+                <TableHead className="!text-slate-50">First Name</TableHead>
+                <TableHead className="!text-slate-50">Last Name</TableHead>
+                <TableHead className="!text-slate-50">Gender</TableHead>
+                <TableHead className="!text-slate-50">Year Level</TableHead>
+                <TableHead className="!text-slate-50">Program</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6}>Loading...</TableCell>
+                <TableRow className="border-0">
+                  <TableCell colSpan={6} className="text-slate-300">Loading...</TableCell>
                 </TableRow>
               ) : (
                 students.map((s, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{s.id}</TableCell>
-                    <TableCell>{s.first_name}</TableCell>
-                    <TableCell>{s.last_name}</TableCell>
-                    <TableCell>{s.gender}</TableCell>
-                    <TableCell>{s.year_level}</TableCell>
-                    <TableCell>{s.program}</TableCell>
+                  <TableRow key={i} className="border-0">
+                    <TableCell className="text-slate-200">{s.id}</TableCell>
+                    <TableCell className="text-slate-200">{s.first_name}</TableCell>
+                    <TableCell className="text-slate-200">{s.last_name}</TableCell>
+                    <TableCell className="text-slate-200">{s.gender}</TableCell>
+                    <TableCell className="text-slate-200">{s.year_level}</TableCell>
+                    <TableCell className="text-slate-200">{s.program}</TableCell>
                   </TableRow>
                 ))
               )}
