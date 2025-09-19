@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,14 +11,74 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export default function AddStudentDialog() {
+export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: () => void }) {
+  const [colleges, setColleges] = useState<any[]>([])
+  const [programs, setPrograms] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    last_name: "",
+    first_name: "",
+    id_number: "",
+    gender: "",
+    year_level: "",
+    college_id: "",
+    program_id: "",
+  })
+
+  // Fetch dropdown data
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const collegeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
+        const programRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`)
+        const collegeData = await collegeRes.json()
+        const programData = await programRes.json()
+        setColleges(collegeData.colleges || collegeData)
+        setPrograms(programData.programs || programData)
+      } catch (err) {
+        console.error("Error fetching dropdowns:", err)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) throw new Error("Failed to add student")
+
+      setFormData({
+        last_name: "",
+        first_name: "",
+        id_number: "",
+        gender: "",
+        year_level: "",
+        college_id: "",
+        program_id: "",
+      })
+
+      onStudentAdded() // 🔄 Refresh students table
+    } catch (err) {
+      console.error("Error adding student:", err)
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="blue" size="lg">Add Student</Button>
       </DialogTrigger>
 
-      <DialogContent className="glass2 sm:max-w-[600px]">
+      <DialogContent className="glass2 sm:max-w-fit">
         <DialogHeader>
           <DialogTitle className="text-white">Add Student</DialogTitle>
           <DialogDescription>
@@ -25,63 +86,93 @@ export default function AddStudentDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form className="flex flex-col gap-4">
-
-          <div className="flex gap-4">
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+          <div className="flex gap-2">
             <input
+              name="last_name"
+              value={formData.last_name}
+              onChange={handleChange}
               type="text"
               placeholder="Last Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+              required
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white"
             />
             <input
+              name="first_name"
+              value={formData.first_name}
+              onChange={handleChange}
               type="text"
               placeholder="First Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+              required
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white"
             />
           </div>
 
           <input
+            name="id_number"
+            value={formData.id_number}
+            onChange={handleChange}
             type="text"
             placeholder="ID Number"
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+            required
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
 
-          <div className="bg-transparent flex gap-4">
+          <div className="flex gap-2">
             <select
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
-              defaultValue=""
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
               required
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option value="" disabled hidden className="bg-gray-900 text-white">Select Gender</option>
-              <option value="Male" className="bg-gray-900 text-white">Male</option>
-              <option value="Female" className="bg-gray-900 text-white">Female</option>
+              <option value="" disabled hidden>Select Gender</option>
+              <option className="bg-gray-900 text-white" value="Male">Male</option>
+              <option className="bg-gray-900 text-white" value="Female">Female</option>
             </select>
 
             <select
+              name="year_level"
+              value={formData.year_level}
+              onChange={handleChange}
+              required
               className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
-              defaultValue=""required>
-              <option value="" disabled hidden className="bg-gray-900 text-white">Select Year Level</option>
-              <option value="1st Year" className="bg-gray-900 text-white">1st Year</option>
-              <option value="2nd Year" className="bg-gray-900 text-white">2nd Year</option>
-              <option value="3rd Year" className="bg-gray-900 text-white">3rd Year</option>
-              <option value="4th Year" className="bg-gray-900 text-white">4th Year</option>
+            >
+              <option value="" disabled hidden>Select Year Level</option>
+              <option className="bg-gray-900 text-white" value="1">1st Year</option>
+              <option className="bg-gray-900 text-white" value="2">2nd Year</option>
+              <option className="bg-gray-900 text-white" value="3">3rd Year</option>
+              <option className="bg-gray-900 text-white" value="4">4th Year</option>
             </select>
           </div>
 
-          <div className="flex gap-4">
-            <select className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
-              defaultValue=""required>
-              <option value="" disabled hidden className="bg-gray-900 text-white">Select College</option>
-              <option value="CCS" className="bg-gray-900 text-white">College of Computer Studies</option>
-              <option value="CED" className="bg-gray-900 text-white">College of Education</option>
+          <div className="flex gap-2">
+            <select
+              name="college_id"
+              value={formData.college_id}
+              onChange={handleChange}
+              required
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+            >
+              <option className="bg-gray-900 text-white" value="" disabled hidden>Select College</option>
+              {colleges.map((c: any) => (
+                <option key={c.id} value={c.id} className="bg-gray-900 text-white">{c.name || c.college_name}</option>
+                
+              ))}
             </select>
 
-            <select className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
-              defaultValue=""required>
+            <select
+              name="program_id"
+              value={formData.program_id}
+              onChange={handleChange}
+              required
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              
+            >
               <option value="" disabled hidden className="bg-gray-900 text-white">Select Program</option>
-              <option value="BSCS" className="bg-gray-900 text-white">BSCS</option>
-              <option value="BSIT" className="bg-gray-900 text-white">BSIT</option>
-              <option value="BSA" className="bg-gray-900 text-white">BSA</option>
+              {programs.map((p: any) => (
+                <option key={p.id} value={p.id} className="bg-gray-900 text-white">{p.program_name }</option>
+              ))}
             </select>
           </div>
 
@@ -91,5 +182,3 @@ export default function AddStudentDialog() {
     </Dialog>
   )
 }
-
-
