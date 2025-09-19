@@ -18,6 +18,7 @@ def get_programs():
             "id": p.id,
             "program_code": p.program_code,
             "program_name": p.program_name,
+            "college_id": p.college_id,
             "college_name": college_name,
             "num_students": num_students
         })

@@ -155,7 +155,7 @@ class Program:
 
 
 class Student:
-    def __init__(self, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None, program_name=None):
+    def __init__(self, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None,program_code=None, program_name=None):
         self.id_number = id_number
         self.last_name = last_name
         self.first_name = first_name
@@ -164,6 +164,7 @@ class Student:
         self.college_id = college_id
         self.program_id = program_id
         self.program_name = program_name
+        self.program_code = program_code
 
     def add(self):
         db = get_db()
@@ -178,7 +179,13 @@ class Student:
     def all(cls):
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT id_number, last_name, first_name, gender, year_level, college_id, program_id FROM students")
+        cursor.execute("""
+        SELECT s.id_number, s.last_name, s.first_name, s.gender, s.year_level,
+            s.college_id, s.program_id, p.program_code, p.program_name
+        FROM students s
+        LEFT JOIN programs p ON s.program_id = p.id
+        LEFT JOIN colleges c ON s.college_id = c.id
+                    """)
         result = cursor.fetchall()
         cursor.close()
-        return [cls(id_number=row[0], last_name=row[1], first_name=row[2], gender=row[3], year_level=row[4], college_id=row[5], program_id=row[6]) for row in result]
+        return [cls(id_number=row[0], last_name=row[1], first_name=row[2], gender=row[3], year_level=row[4], college_id=row[5], program_id=row[6],program_code=row[7], program_name=row[8]) for row in result]
