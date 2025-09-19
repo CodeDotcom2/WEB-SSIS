@@ -30,7 +30,7 @@ export default function CollegesPage() {
   const [loading, setLoading] = useState(true)
 
 
-  useEffect(() => {
+  {/*useEffect(() => {
     async function fetchColleges() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/colleges`)
@@ -45,7 +45,7 @@ export default function CollegesPage() {
 
     fetchColleges()
   }, [])
-
+*/}
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">

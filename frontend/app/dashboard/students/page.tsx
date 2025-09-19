@@ -39,7 +39,7 @@ export default function StudentsPage() {
   const [order, setOrder] = useState("Ascending")
 
 
-  useEffect(() => {
+  {/*useEffect(() => {
     async function fetchStudents() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students`)
@@ -54,7 +54,7 @@ export default function StudentsPage() {
 
     fetchStudents()
   }, [])
-
+*/}
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
