@@ -1,8 +1,10 @@
 from flask import request, jsonify
 from . import college_bp
 from app.models import College, Program, Student
+from app import csrf
 
-@college_bp.route("/", methods=["GET"])
+# GET /dashboard/colleges
+@college_bp.route("/colleges", methods=["GET"], strict_slashes=False)
 def get_colleges():
     colleges = College.all()
     programs = Program.all()
@@ -24,10 +26,22 @@ def get_colleges():
 
     return jsonify({"colleges": college_list})
 
-
+# POST /dashboard/colleges
 @college_bp.route("/colleges", methods=["POST"])
+@csrf.exempt
 def add_college():
     data = request.json
-    new_college = College(college_code=data.get("college_code"), college_name=data.get("college_name"))
+    if not data.get("college_name") or not data.get("college_code"):
+        return jsonify({"error": "College name and code are required"}), 400
+
+    new_college = College(
+        college_code=data.get("college_code"),
+        college_name=data.get("college_name")
+    )
     new_college.add()
-    return jsonify({"message": "College added successfully", "id": new_college.id})
+
+    return jsonify({
+        "message": "College added successfully",
+        "id": new_college.id
+    })
+

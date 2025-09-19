@@ -70,7 +70,20 @@ export default function CollegesPage() {
         </div>
 
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
-          <AddCollegeDialog />
+          <AddCollegeDialog
+            onAdd={async () => {
+              setLoading(true)
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
+                const data = await res.json()
+                setColleges(data.colleges)
+              } catch (err) {
+                console.error(err)
+              } finally {
+                setLoading(false)
+              }
+            }}
+          />
           <Button variant="deleteEffect" size="lg">
             Delete College
           </Button>

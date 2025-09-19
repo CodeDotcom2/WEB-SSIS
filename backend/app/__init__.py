@@ -25,14 +25,15 @@ def create_app():
     from .user import user_bp
     app.register_blueprint(user_bp)
 
-    from .routes.students import students_bp
-    app.register_blueprint(students_bp)
+    from .student import student_bp
+    app.register_blueprint(student_bp)
 
-    from .routes.colleges import colleges_bp
-    app.register_blueprint(colleges_bp)
+    from .college import college_bp
+    app.register_blueprint(college_bp)
 
-    from .routes.programs import programs_bp
-    app.register_blueprint(programs_bp)
+    from .program import program_bp
+    app.register_blueprint(program_bp)
+
 
     @login_manager.user_loader
     def load_user(user_id):

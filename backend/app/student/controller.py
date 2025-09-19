@@ -8,7 +8,8 @@ def list_students():
     students = models.Student.all()
     return jsonify([s.__dict__ for s in students])
 
-@student_bp.route("/", methods=["POST"])
+
+@student_bp.route("/students", methods=["POST"])
 @csrf.exempt
 def add_student():
     data = request.get_json()

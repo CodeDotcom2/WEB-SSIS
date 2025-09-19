@@ -155,7 +155,7 @@ class Program:
 
 
 class Student:
-    def __init__(self, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None):
+    def __init__(self, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None, program_name=None):
         self.id_number = id_number
         self.last_name = last_name
         self.first_name = first_name
@@ -163,6 +163,7 @@ class Student:
         self.year_level = year_level
         self.college_id = college_id
         self.program_id = program_id
+        self.program_name = program_name
 
     def add(self):
         db = get_db()

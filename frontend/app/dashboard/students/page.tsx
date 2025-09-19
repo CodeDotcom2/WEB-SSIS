@@ -36,28 +36,28 @@ export default function StudentsPage() {
   const [order, setOrder] = useState("Ascending")
   const [search, setSearch] = useState("")
 
-  // Fetch students from API
-  useEffect(() => {
-    async function fetchStudents() {
-      setLoading(true)
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`)
-        const data = await res.json()
-        setStudents(data.students)
-      } catch (err) {
-        console.error("Error fetching students:", err)
-      } finally {
-        setLoading(false)
-      }
+  async function fetchStudents() {
+    setLoading(true)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`)
+      const data = await res.json()
+      setStudents(Array.isArray(data) ? data : data.students || [])
+    } catch (err) {
+      console.error("Error fetching students:", err)
+      setStudents([])
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchStudents()
   }, [])
 
-  // Filtered and sorted students (for future extension)
+
   const displayedStudents = students
     .filter(s =>
-      `${s.first_name} ${s.last_name} ${s.id} ${s.program}`.toLowerCase().includes(search.toLowerCase())
+      `${s.first_name} ${s.last_name} ${s.id_number} ${s.program}`.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === "Sort By") return 0
@@ -87,7 +87,8 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
-          <AddStudentDialog />
+          <AddStudentDialog onStudentAdded={() => fetchStudents()} />
+        
           <Button variant="deleteEffect" size="lg">
             Delete Student
           </Button>
@@ -160,7 +161,7 @@ export default function StudentsPage() {
                     <TableCell className="text-slate-200">{s.last_name}</TableCell>
                     <TableCell className="text-slate-200">{s.gender}</TableCell>
                     <TableCell className="text-slate-200">{s.year_level}</TableCell>
-                    <TableCell className="text-slate-200">{s.program}</TableCell>
+                    <TableCell className="text-slate-200">{s.program_code}</TableCell>
                   </TableRow>
                 ))
               )}
