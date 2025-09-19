@@ -101,3 +101,83 @@ class Users(UserMixin):
 
     def get_id(self):
         return str(self.id)
+
+
+class College:
+    def __init__(self, id=None, college_code=None, college_name=None):
+        self.id = id
+        self.college_code = college_code
+        self.college_name = college_name
+
+    def add(self):
+        db = get_db()
+        cursor = db.cursor()
+        sql = "INSERT INTO colleges (college_code, college_name) VALUES (%s, %s) RETURNING id"
+        cursor.execute(sql, (self.college_code, self.college_name))
+        self.id = cursor.fetchone()[0]
+        db.commit()
+        cursor.close()
+
+    @classmethod
+    def all(cls):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id, college_code, college_name FROM colleges")
+        result = cursor.fetchall()
+        cursor.close()
+        return [cls(id=row[0], college_code=row[1], college_name=row[2]) for row in result]
+
+
+class Program:
+    def __init__(self, id=None, program_code=None, program_name=None, college_id=None):
+        self.id = id
+        self.program_code = program_code
+        self.program_name = program_name
+        self.college_id = college_id
+
+    def add(self):
+        db = get_db()
+        cursor = db.cursor()
+        sql = "INSERT INTO programs (program_code, program_name, college_id) VALUES (%s, %s, %s) RETURNING id"
+        cursor.execute(sql, (self.program_code, self.program_name, self.college_id))
+        self.id = cursor.fetchone()[0]
+        db.commit()
+        cursor.close()
+
+    @classmethod
+    def all(cls):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id, program_code, program_name, college_id FROM programs")
+        result = cursor.fetchall()
+        cursor.close()
+        return [cls(id=row[0], program_code=row[1], program_name=row[2], college_id=row[3]) for row in result]
+
+
+class Student:
+    def __init__(self, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None):
+        self.id_number = id_number
+        self.last_name = last_name
+        self.first_name = first_name
+        self.gender = gender
+        self.year_level = year_level
+        self.college_id = college_id
+        self.program_id = program_id
+
+    def add(self):
+        db = get_db()
+        cursor = db.cursor()
+        sql = """INSERT INTO students (id_number, last_name, first_name, gender, year_level, college_id, program_id)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+        cursor.execute(sql, (self.id_number, self.last_name, self.first_name, self.gender, self.year_level, self.college_id, self.program_id))
+        db.commit()
+        cursor.close()
+
+    @classmethod
+    def all(cls):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id_number, last_name, first_name, gender, year_level, college_id, program_id FROM students")
+        result = cursor.fetchall()
+        cursor.close()
+        return [cls(id_number=row[0], last_name=row[1], first_name=row[2], gender=row[3], year_level=row[4], college_id=row[5], program_id=row[6]) for row in result]

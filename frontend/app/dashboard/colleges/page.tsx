@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
 import {
   Pagination,
   PaginationContent,
@@ -22,20 +21,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-
 import AddCollegeDialog from "@/components/AddCollege"
 
 export default function CollegesPage() {
-  const [colleges, setCollege] = useState<any[]>([])
+  const [colleges, setColleges] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
 
-
-  {/*useEffect(() => {
+  useEffect(() => {
     async function fetchColleges() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/colleges`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
         const data = await res.json()
-        setCollege(data.colleges)
+        setColleges(data.colleges)
       } catch (err) {
         console.error("Error fetching colleges:", err)
       } finally {
@@ -45,7 +43,14 @@ export default function CollegesPage() {
 
     fetchColleges()
   }, [])
-*/}
+
+  // Simple search filter (future enhancement: debounce, API search)
+  const filteredColleges = colleges.filter(
+    (c) =>
+      c.college_code.toLowerCase().includes(search.toLowerCase()) ||
+      c.college_name.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
@@ -56,23 +61,28 @@ export default function CollegesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search college..."
+              placeholder="Search colleges..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
             />
           </div>
         </div>
 
-        <div className="flex glass rounded-lg gap-3 p-4 items-center">
+        <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
           <AddCollegeDialog />
-          <Button variant="blue" size="lg">Delete Student</Button>
-          <Button variant="blue" size="lg">Edit Student</Button>
+          <Button variant="deleteEffect" size="lg">
+            Delete College
+          </Button>
+          <Button variant="editEffect" size="lg">
+            Edit College
+          </Button>
         </div>
 
-        <div className="flex-1 glass rounded-lg overflow-auto p-4">
-          <Table className="w-full table-auto">
-            <TableCaption>All College</TableCaption>
+        <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
+          <Table className="w-full table-auto border-collapse">
+            <TableCaption>All Colleges</TableCaption>
             <TableHeader>
-
               <TableRow>
                 <TableHead className="!text-slate-50">College Code</TableHead>
                 <TableHead className="!text-slate-50">College Name</TableHead>
@@ -83,17 +93,25 @@ export default function CollegesPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-slate-300">Loading...</TableCell>
+                  <TableCell colSpan={4} className="text-slate-300">
+                    Loading...
+                  </TableCell>
                 </TableRow>
-              ) : (
-                colleges.map((c, i) => (
+              ) : filteredColleges.length > 0 ? (
+                filteredColleges.map((c, i) => (
                   <TableRow key={i} className="border-0">
-                    <TableCell className="text-slate-200">{c.code}</TableCell>
-                    <TableCell className="text-slate-200">{c.name}</TableCell>
-                    <TableCell className="text-slate-200">{c.num_program}</TableCell>
+                    <TableCell className="text-slate-200">{c.college_code}</TableCell>
+                    <TableCell className="text-slate-200">{c.college_name}</TableCell>
+                    <TableCell className="text-slate-200">{c.num_programs}</TableCell>
                     <TableCell className="text-slate-200">{c.num_students}</TableCell>
                   </TableRow>
                 ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-slate-300">
+                    No colleges found.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>

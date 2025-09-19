@@ -4,12 +4,6 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Table,
   TableBody,
   TableCaption,
@@ -18,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
 import {
   Pagination,
   PaginationContent,
@@ -32,16 +25,16 @@ import {
 import AddProgramDialog from "@/components/AddProgram"
 
 export default function ProgramsPage() {
-  const [programs, setProgram] = useState<any[]>([])
+  const [programs, setPrograms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-
-  {/*useEffect(() => {
+  // Fetch programs from backend
+  useEffect(() => {
     async function fetchPrograms() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`)
         const data = await res.json()
-        setProgram(data.programs)
+        setPrograms(data.programs)
       } catch (err) {
         console.error("Error fetching programs:", err)
       } finally {
@@ -51,8 +44,6 @@ export default function ProgramsPage() {
 
     fetchPrograms()
   }, [])
-
-*/}
 
   return (
     <div className="h-screen flex flex-col">
@@ -72,19 +63,18 @@ export default function ProgramsPage() {
 
         <div className="flex glass rounded-lg gap-3 p-4 items-center">
           <AddProgramDialog />
-          <Button variant="blue" size="lg">Delete Student</Button>
-          <Button variant="blue" size="lg">Edit Student</Button>
+          <Button variant="deleteEffect" size="lg">Delete Program</Button>
+          <Button variant="editEffect" size="lg">Edit Program</Button>
         </div>
 
         <div className="flex-1 glass rounded-lg overflow-auto p-4">
           <Table className="w-full table-auto">
-            <TableCaption>All Program</TableCaption>
+            <TableCaption>All Programs</TableCaption>
             <TableHeader>
-
               <TableRow>
                 <TableHead className="!text-slate-50">Program Code</TableHead>
                 <TableHead className="!text-slate-50">Program Name</TableHead>
-                <TableHead className="!text-slate-50">College Code</TableHead>
+                <TableHead className="!text-slate-50">College Name</TableHead>
                 <TableHead className="!text-slate-50">Number of Students</TableHead>
               </TableRow>
             </TableHeader>
@@ -97,10 +87,10 @@ export default function ProgramsPage() {
               ) : (
                 programs.map((p, i) => (
                   <TableRow key={i} className="border-0">
-                    <TableCell className="text-slate-200">{p.code}</TableCell>
-                    <TableCell className="text-slate-200">{p.name}</TableCell>
-                    <TableCell className="text-slate-200">{p.college_code}</TableCell>
-                    <TableCell className="text-slate-200">{p.num_students}</TableCell>
+                    <TableCell className="text-slate-200">{p.program_code}</TableCell>
+                    <TableCell className="text-slate-200">{p.program_name}</TableCell>
+                    <TableCell className="text-slate-200">{p.college_name}</TableCell>
+                    <TableCell className="text-slate-200">{p.num_students || 0}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -108,6 +98,7 @@ export default function ProgramsPage() {
           </Table>
         </div>
       </main>
+
       <Pagination>
         <PaginationContent>
           <PaginationItem>
