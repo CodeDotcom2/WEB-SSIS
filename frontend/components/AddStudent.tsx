@@ -14,6 +14,7 @@ import {
 export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: () => void }) {
   const [colleges, setColleges] = useState<any[]>([])
   const [programs, setPrograms] = useState<any[]>([])
+  const [filteredPrograms, setFilteredPrograms] = useState<any[]>([])
   const [formData, setFormData] = useState({
     last_name: "",
     first_name: "",
@@ -24,7 +25,6 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
     program_id: "",
   })
 
-  // Fetch dropdown data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -32,6 +32,13 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
         const programRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`)
         const collegeData = await collegeRes.json()
         const programData = await programRes.json()
+
+        console.log("Colleges:", collegeData)
+        console.log("Programs:", programData)
+
+        // ✅ log one sample program
+        console.log("Sample program object:", (programData.programs || programData)[0])
+
         setColleges(collegeData.colleges || collegeData)
         setPrograms(programData.programs || programData)
       } catch (err) {
@@ -40,6 +47,18 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (formData.college_id) {
+      const filtered = programs.filter((p) => String(p.college_id) === String(formData.college_id))
+      console.log("Selected college_id:", formData.college_id)
+      console.log("Filtered programs:", filtered)
+      setFilteredPrograms(filtered)
+      setFormData((prev) => ({ ...prev, program_id: "" }))
+    } else {
+      setFilteredPrograms([])
+    }
+  }, [formData.college_id, programs])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -66,7 +85,7 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
         program_id: "",
       })
 
-      onStudentAdded() // 🔄 Refresh students table
+      onStudentAdded()
     } catch (err) {
       console.error("Error adding student:", err)
     }
@@ -124,7 +143,7 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
               value={formData.gender}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
             >
               <option value="" disabled hidden>Select Gender</option>
               <option className="bg-gray-900 text-white" value="Male">Male</option>
@@ -136,7 +155,7 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
               value={formData.year_level}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
             >
               <option value="" disabled hidden>Select Year Level</option>
               <option className="bg-gray-900 text-white" value="1">1st Year</option>
@@ -150,14 +169,23 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
             <select
               name="college_id"
               value={formData.college_id}
-              onChange={handleChange}
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  college_id: e.target.value,
+                  program_id: "",
+                })
+              }}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option className="bg-gray-900 text-white" value="" disabled hidden>Select College</option>
+              <option className="bg-gray-900 text-white" value="" disabled hidden>
+                Select College
+              </option>
               {colleges.map((c: any) => (
-                <option key={c.id} value={c.id} className="bg-gray-900 text-white">{c.name || c.college_name}</option>
-                
+                <option key={c.id} value={c.id} className="bg-gray-900 text-white">
+                  {c.college_name}
+                </option>
               ))}
             </select>
 
@@ -166,12 +194,15 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
               value={formData.program_id}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
-              
+              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option value="" disabled hidden className="bg-gray-900 text-white">Select Program</option>
-              {programs.map((p: any) => (
-                <option key={p.id} value={p.id} className="bg-gray-900 text-white">{p.program_name }</option>
+              <option value="" disabled hidden className="bg-gray-900 text-white">
+                Select Program
+              </option>
+              {filteredPrograms.map((p: any) => (
+                <option key={p.id} value={p.id} className="bg-gray-900 text-white">
+                  {p.program_name}
+                </option>
               ))}
             </select>
           </div>
