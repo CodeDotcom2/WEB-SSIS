@@ -12,16 +12,16 @@ export default function Sidebar() {
     <aside className="glass p-4 pt-14 flex flex-col gap-6 shadow-lg">
       <h1 className="text-xl font-bold mb-15 text-center text-white">Student Information</h1>
       
-      <Button className="p-8" asChild variant={pathname === "/students" ? "blue" : "ghost"}>
-        <Link href="/students"><User className="mr-0 h-4 w-4" />Students</Link>
+      <Button className="p-8" asChild variant={pathname === "/dashboard/students" ? "blue" : "ghost"}>
+        <Link href="/dashboard/students"><User className="mr-0 h-4 w-4" />Students</Link>
       </Button>
 
-      <Button className="p-8" asChild variant={pathname === "/colleges" ? "blue" : "ghost"}>
-        <Link href="/colleges"><University className="mr-0 h-4 w-4" />Colleges</Link>
+      <Button className="p-8" asChild variant={pathname === "/dashboard/colleges" ? "blue" : "ghost"}>
+        <Link href="/dashboard/colleges"><University className="mr-0 h-4 w-4" />Colleges</Link>
       </Button>
 
-      <Button className="p-8" asChild variant={pathname === "/programs" ? "blue" : "ghost"}>
-        <Link href="/programs"><BookOpen className="mr-0 h-4 w-4" />Programs</Link>
+      <Button className="p-8" asChild variant={pathname === "/dashboard/programs" ? "blue" : "ghost"}>
+        <Link href="/dashboard/programs"><BookOpen className="mr-0 h-4 w-4" />Programs</Link>
       </Button>
     </aside>
   )

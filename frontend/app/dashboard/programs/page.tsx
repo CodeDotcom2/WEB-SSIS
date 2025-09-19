@@ -36,7 +36,7 @@ export default function ProgramsPage() {
   const [loading, setLoading] = useState(true)
 
 
-  useEffect(() => {
+  {/*useEffect(() => {
     async function fetchPrograms() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs`)
@@ -52,7 +52,7 @@ export default function ProgramsPage() {
     fetchPrograms()
   }, [])
 
-
+*/}
 
   return (
     <div className="h-screen flex flex-col">
@@ -92,7 +92,7 @@ export default function ProgramsPage() {
             <TableBody>
               {loading ? (
                 <TableRow className="border-0">
-                  <TableCell colSpan={4}>Loading...</TableCell>
+                  <TableCell colSpan={4} className="text-slate-300">Loading...</TableCell>
                 </TableRow>
               ) : (
                 programs.map((p, i) => (
