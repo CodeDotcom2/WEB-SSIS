@@ -25,6 +25,15 @@ def create_app():
     from .user import user_bp
     app.register_blueprint(user_bp)
 
+    from .routes.students import students_bp
+    app.register_blueprint(students_bp)
+
+    from .routes.colleges import colleges_bp
+    app.register_blueprint(colleges_bp)
+
+    from .routes.programs import programs_bp
+    app.register_blueprint(programs_bp)
+
     @login_manager.user_loader
     def load_user(user_id):
         from .models import Users

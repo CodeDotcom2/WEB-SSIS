@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
 import {
   Pagination,
   PaginationContent,
@@ -29,7 +27,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-
 import AddStudentDialog from "@/components/AddStudent"
 
 export default function StudentsPage() {
@@ -37,12 +34,14 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState("Sort By")
   const [order, setOrder] = useState("Ascending")
+  const [search, setSearch] = useState("")
 
-
-  {/*useEffect(() => {
+  // Fetch students from API
+  useEffect(() => {
     async function fetchStudents() {
+      setLoading(true)
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/students`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`)
         const data = await res.json()
         setStudents(data.students)
       } catch (err) {
@@ -54,7 +53,21 @@ export default function StudentsPage() {
 
     fetchStudents()
   }, [])
-*/}
+
+  // Filtered and sorted students (for future extension)
+  const displayedStudents = students
+    .filter(s =>
+      `${s.first_name} ${s.last_name} ${s.id} ${s.program}`.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortBy === "Sort By") return 0
+      const fieldA = (a as any)[sortBy.toLowerCase().replace(" ", "_")]
+      const fieldB = (b as any)[sortBy.toLowerCase().replace(" ", "_")]
+      if (!fieldA || !fieldB) return 0
+      if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
+      return String(fieldB).localeCompare(String(fieldA))
+    })
+
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
@@ -66,6 +79,8 @@ export default function StudentsPage() {
             <input
               type="text"
               placeholder="Search students..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
             />
           </div>
@@ -73,72 +88,74 @@ export default function StudentsPage() {
 
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
           <AddStudentDialog />
-          <Button variant="blue" size="lg">Delete Student</Button>
-          <Button variant="blue" size="lg">Edit Student</Button>
+          <Button variant="deleteEffect" size="lg">
+            Delete Student
+          </Button>
+          <Button variant="editEffect" size="lg">
+            Edit Student
+          </Button>
         </div>
 
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
-            <div className="flex gap-7 mb-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
-                    {sortBy}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setSortBy("ID Number")}>
-                      ID Number
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Last Name")}>
-                      Last Name
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("First Name")}>
-                      First Name
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Year Level")}>
-                      Year Level
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("Program")}>
-                      Program
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          <div className="flex gap-7 mb-2">
+            {/* Sort By */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {sortBy}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["ID Number", "First Name", "Last Name", "Year Level", "Program"].map(option => (
+                  <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
-                        {order}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setOrder("Ascending")}>
-                          Ascending
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setOrder("Descending")}>
-                          Descending
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            {/* Order */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {order}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["Ascending", "Descending"].map(option => (
+                  <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <Table className="w-full table-auto border-collapse">
             <TableCaption>All Students</TableCaption>
             <TableHeader>
-
               <TableRow>
-                <TableHead className="!text-slate-50">ID No.</TableHead>
-                <TableHead className="!text-slate-50">First Name</TableHead>
-                <TableHead className="!text-slate-50">Last Name</TableHead>
-                <TableHead className="!text-slate-50">Gender</TableHead>
-                <TableHead className="!text-slate-50">Year Level</TableHead>
-                <TableHead className="!text-slate-50">Program</TableHead>
+                {["ID No.", "First Name", "Last Name", "Gender", "Year Level", "Program"].map(header => (
+                  <TableHead key={header} className="!text-slate-50">
+                    {header}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {loading ? (
                 <TableRow className="border-0">
-                  <TableCell colSpan={6} className="text-slate-300">Loading...</TableCell>
+                  <TableCell colSpan={6} className="text-slate-300">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : displayedStudents.length === 0 ? (
+                <TableRow className="border-0">
+                  <TableCell colSpan={6} className="text-slate-300">
+                    No students found.
+                  </TableCell>
                 </TableRow>
               ) : (
-                students.map((s, i) => (
+                displayedStudents.map((s, i) => (
                   <TableRow key={i} className="border-0">
-                    <TableCell className="text-slate-200">{s.id}</TableCell>
+                    <TableCell className="text-slate-200">{s.id_number}</TableCell>
                     <TableCell className="text-slate-200">{s.first_name}</TableCell>
                     <TableCell className="text-slate-200">{s.last_name}</TableCell>
                     <TableCell className="text-slate-200">{s.gender}</TableCell>
@@ -148,10 +165,10 @@ export default function StudentsPage() {
                 ))
               )}
             </TableBody>
-
           </Table>
         </div>
       </main>
+
       <Pagination>
         <PaginationContent>
           <PaginationItem>

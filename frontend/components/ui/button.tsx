@@ -24,8 +24,8 @@ const buttonVariants = cva(
 
         blue: "bg-blue-600 text-white hover:bg-blue-800",
 
-
-        
+        deleteEffect: "bg-transparent text-white border border-transparent hover:border-red-400 active:bg-red-900 active:text-white active:border-red-500",
+        editEffect: "bg-transparent text-white border border-transparent hover:border-green-400 active:bg-green-800 active:text-white active:border-blue-500",
 
       },
       size: {
