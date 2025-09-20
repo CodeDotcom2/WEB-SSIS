@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Trash2 } from "lucide-react"
+import { Search, Trash2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -27,6 +27,8 @@ export default function CollegesPage() {
   const [colleges, setColleges] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [editingCollege, setEditingCollege] = useState<any | null>(null)
+  const [open, setOpen] = useState(false)
 
   async function fetchColleges() {
     setLoading(true)
@@ -72,6 +74,7 @@ export default function CollegesPage() {
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
+        {/* Header + Search */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <h1 className="text-white text-3xl font-bold">Manage Colleges</h1>
           <div className="relative w-full md:w-1/3">
@@ -81,15 +84,21 @@ export default function CollegesPage() {
               placeholder="Search colleges..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
+              className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full bg-transparent focus:outline-none"
             />
           </div>
         </div>
 
+        {/* Add Button */}
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
-          <AddCollegeDialog onAdd={fetchColleges} />
+          <AddCollegeDialog
+            onCollegeAdded={fetchColleges}
+            open={open && !editingCollege}
+            onOpenChange={setOpen}
+          />
         </div>
 
+        {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
           <Table className="w-full table-auto border-collapse">
             <TableCaption>All Colleges</TableCaption>
@@ -99,13 +108,13 @@ export default function CollegesPage() {
                 <TableHead className="!text-slate-50">College Name</TableHead>
                 <TableHead className="!text-slate-50">Number of Programs</TableHead>
                 <TableHead className="!text-slate-50">Number of Students</TableHead>
-                <TableHead className="!text-slate-50">Actions</TableHead>
+                <TableHead className="!text-slate-50 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-slate-300">
+                  <TableCell colSpan={5} className="text-slate-300 text-center">
                     Loading...
                   </TableCell>
                 </TableRow>
@@ -116,7 +125,21 @@ export default function CollegesPage() {
                     <TableCell className="text-slate-200">{c.college_name}</TableCell>
                     <TableCell className="text-slate-200">{c.num_programs}</TableCell>
                     <TableCell className="text-slate-200">{c.num_students}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-2 justify-center">
+                      {/* Edit Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                        onClick={() => {
+                          setEditingCollege(c)
+                          setOpen(true)
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+
+                      {/* Delete Button */}
                       <Button
                         variant="deleteEffect"
                         size="sm"
@@ -129,7 +152,7 @@ export default function CollegesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-slate-300">
+                  <TableCell colSpan={5} className="text-slate-300 text-center">
                     No colleges found.
                   </TableCell>
                 </TableRow>
@@ -139,6 +162,7 @@ export default function CollegesPage() {
         </div>
       </main>
 
+      {/* Pagination */}
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -155,6 +179,20 @@ export default function CollegesPage() {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+
+      {/* Reuse AddCollegeDialog for editing */}
+      {editingCollege && (
+        <AddCollegeDialog
+          editingCollege={editingCollege}
+          onCollegeUpdated={fetchColleges}
+          open={open}
+          onOpenChange={(o) => {
+            if (!o) setEditingCollege(null)
+            setOpen(o)
+          }}
+          triggerButton={false} // don’t render the “Add” button inside this one
+        />
+      )}
     </div>
   )
 }
