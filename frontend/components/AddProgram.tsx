@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { Plus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -11,14 +12,41 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export default function AddProgramDialog({ onAdd }: { onAdd: () => void }) {
+export default function AddProgramDialog({
+  onProgramAdded,
+  onProgramUpdated,
+  editingProgram,
+  triggerButton = true,
+  open,
+  onOpenChange,
+}: {
+  onProgramAdded?: () => void
+  onProgramUpdated?: () => void
+  editingProgram?: any
+  triggerButton?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
   const [colleges, setColleges] = useState<any[]>([])
-  const [programName, setProgramName] = useState("")
-  const [programCode, setProgramCode] = useState("")
-  const [collegeId, setCollegeId] = useState("")
+  const [formData, setFormData] = useState({
+    program_name: "",
+    program_code: "",
+    college_id: "",
+  })
   const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
 
+  // populate when editing
+  useEffect(() => {
+    if (editingProgram) {
+      setFormData({
+        program_name: editingProgram.program_name || "",
+        program_code: editingProgram.program_code || "",
+        college_id: editingProgram.college_id?.toString() || "",
+      })
+    }
+  }, [editingProgram])
+
+  // fetch colleges
   useEffect(() => {
     async function fetchColleges() {
       try {
@@ -32,76 +60,95 @@ export default function AddProgramDialog({ onAdd }: { onAdd: () => void }) {
     fetchColleges()
   }, [])
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!programName || !programCode || !collegeId) return
-
+    if (!formData.program_name || !formData.program_code || !formData.college_id) return
     setLoading(true)
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`, {
-        method: "POST",
+      const url = editingProgram
+        ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs/${editingProgram.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`
+
+      const method = editingProgram ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          program_code: programCode,
-          program_name: programName,
-          college_id: parseInt(collegeId, 10),
+          ...formData,
+          college_id: parseInt(formData.college_id, 10),
         }),
       })
 
-      if (res.ok) {
-        setProgramName("")
-        setProgramCode("")
-        setCollegeId("")
-        onAdd()       // 🔑 refresh parent list
-        setOpen(false) // 🔑 close dialog
+      if (!res.ok) throw new Error("Failed to save program")
+
+      if (editingProgram) {
+        onProgramUpdated && onProgramUpdated()
       } else {
-        const data = await res.json()
-        alert(data.error || "Failed to add program")
+        setFormData({ program_name: "", program_code: "", college_id: "" })
+        onProgramAdded && onProgramAdded()
       }
+
+      onOpenChange?.(false) // close after success
     } catch (err) {
       console.error(err)
-      alert("Something went wrong")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="blue" size="lg">Add Program</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          <Button variant="blue" size="lg">
+            <Plus className="w-5 h-5" /> Add Program
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent className="glass2 sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-white">Add Program</DialogTitle>
+          <DialogTitle className="text-white">
+            {editingProgram ? "Edit Program" : "Add Program"}
+          </DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new Program.
+            {editingProgram
+              ? "Update the details of the program."
+              : "Fill in the details below to add a new program."}
           </DialogDescription>
         </DialogHeader>
+
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
-            value={programName}
-            onChange={e => setProgramName(e.target.value)}
+            name="program_name"
+            value={formData.program_name}
+            onChange={handleChange}
             type="text"
             placeholder="Program Name"
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
           <input
-            value={programCode}
-            onChange={e => setProgramCode(e.target.value)}
+            name="program_code"
+            value={formData.program_code}
+            onChange={handleChange}
             type="text"
             placeholder="Program Code"
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
           <select
-            value={collegeId}
-            onChange={e => setCollegeId(e.target.value)}
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+            name="college_id"
+            value={formData.college_id}
+            onChange={handleChange}
             required
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
           >
-            <option value="" disabled hidden className="bg-gray-900 text-white">
-              Select College
-            </option>
+            <option value="" disabled hidden>Select College</option>
             {colleges.map((c) => (
               <option key={c.id} value={c.id} className="bg-gray-900 text-white">
                 {c.college_name}
@@ -109,7 +156,7 @@ export default function AddProgramDialog({ onAdd }: { onAdd: () => void }) {
             ))}
           </select>
           <Button variant="blue" type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : editingProgram ? "Update" : "Save"}
           </Button>
         </form>
       </DialogContent>

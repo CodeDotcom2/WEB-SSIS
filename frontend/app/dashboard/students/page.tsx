@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search } from "lucide-react"
+import { Search, Trash2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -36,6 +36,10 @@ export default function StudentsPage() {
   const [order, setOrder] = useState("Ascending")
   const [search, setSearch] = useState("")
 
+  // editing dialog
+  const [editingStudent, setEditingStudent] = useState<any | null>(null)
+  const [open, setOpen] = useState(false)
+
   async function fetchStudents() {
     setLoading(true)
     try {
@@ -50,19 +54,38 @@ export default function StudentsPage() {
     }
   }
 
+  async function deleteStudent(id_number: string) {
+    if (!confirm(`Are you sure you want to delete student ${id_number}?`)) return
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students/${id_number}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        fetchStudents()
+      } else {
+        const error = await res.json()
+        alert(error.error || "Failed to delete student")
+      }
+    } catch (err) {
+      console.error("Error deleting student:", err)
+    }
+  }
+
   useEffect(() => {
     fetchStudents()
   }, [])
 
-
   const displayedStudents = students
-    .filter(s =>
-      `${s.first_name} ${s.last_name} ${s.id_number} ${s.program}`.toLowerCase().includes(search.toLowerCase())
+    .filter((s) =>
+      `${s.first_name} ${s.last_name} ${s.id_number} ${s.program_code}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === "Sort By") return 0
-      const fieldA = (a as any)[sortBy.toLowerCase().replace(" ", "_")]
-      const fieldB = (b as any)[sortBy.toLowerCase().replace(" ", "_")]
+      const fieldKey = sortBy.toLowerCase().replace(" ", "_")
+      const fieldA = (a as any)[fieldKey]
+      const fieldB = (b as any)[fieldKey]
       if (!fieldA || !fieldB) return 0
       if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
       return String(fieldB).localeCompare(String(fieldA))
@@ -71,6 +94,7 @@ export default function StudentsPage() {
   return (
     <div className="h-screen flex flex-col">
       <main className="flex flex-col flex-1 p-6 gap-6">
+        {/* Header + Search */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <h1 className="text-white text-3xl font-bold">Manage Students</h1>
 
@@ -80,23 +104,18 @@ export default function StudentsPage() {
               type="text"
               placeholder="Search students..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="!text-slate-50 border rounded-lg pl-10 pr-4 py-2 w-full"
             />
           </div>
         </div>
 
+        {/* Add Student */}
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
-          <AddStudentDialog onStudentAdded={() => fetchStudents()} />
-        
-          <Button variant="deleteEffect" size="lg">
-            Delete Student
-          </Button>
-          <Button variant="editEffect" size="lg">
-            Edit Student
-          </Button>
+          <AddStudentDialog onStudentAdded={fetchStudents} />
         </div>
 
+        {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
           <div className="flex gap-7 mb-2">
             {/* Sort By */}
@@ -105,7 +124,7 @@ export default function StudentsPage() {
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {["ID Number", "First Name", "Last Name", "Year Level", "Program"].map(option => (
+                {["ID Number", "First Name", "Last Name", "Year Level", "Program"].map((option) => (
                   <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
                     {option}
                   </DropdownMenuItem>
@@ -119,7 +138,7 @@ export default function StudentsPage() {
                 {order}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {["Ascending", "Descending"].map(option => (
+                {["Ascending", "Descending"].map((option) => (
                   <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
                     {option}
                   </DropdownMenuItem>
@@ -131,8 +150,8 @@ export default function StudentsPage() {
           <Table className="w-full table-auto border-collapse">
             <TableCaption>All Students</TableCaption>
             <TableHeader>
-              <TableRow>
-                {["ID No.", "First Name", "Last Name", "Gender", "Year Level", "Program"].map(header => (
+              <TableRow className="hover:bg-transparent">
+                {["ID No.", "First Name", "Last Name", "Gender", "Year Level", "Program", "Actions"].map((header) => (
                   <TableHead key={header} className="!text-slate-50">
                     {header}
                   </TableHead>
@@ -141,35 +160,60 @@ export default function StudentsPage() {
             </TableHeader>
 
             <TableBody>
-              {loading ? (
-                <TableRow className="border-0">
-                  <TableCell colSpan={6} className="text-slate-300">
-                    Loading...
+              {displayedStudents.map((s, i) => (
+                <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
+                  <TableCell className="text-slate-200">{s.id_number}</TableCell>
+                  <TableCell className="text-slate-200">{s.first_name}</TableCell>
+                  <TableCell className="text-slate-200">{s.last_name}</TableCell>
+                  <TableCell className="text-slate-200">{s.gender}</TableCell>
+                  <TableCell className="text-slate-200">{s.year_level}</TableCell>
+                  <TableCell className="text-slate-200">{s.program_code}</TableCell>
+
+                  {/* Actions */}
+                  <TableCell className="flex gap-2 hover:bg-transparent">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingStudent(s)
+                        setOpen(true)
+                      }}
+                      className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="deleteEffect"
+                      size="sm"
+                      onClick={() => deleteStudent(s.id_number)}
+                      className="flex items-center gap-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ) : displayedStudents.length === 0 ? (
-                <TableRow className="border-0">
-                  <TableCell colSpan={6} className="text-slate-300">
-                    No students found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                displayedStudents.map((s, i) => (
-                  <TableRow key={i} className="border-0">
-                    <TableCell className="text-slate-200">{s.id_number}</TableCell>
-                    <TableCell className="text-slate-200">{s.first_name}</TableCell>
-                    <TableCell className="text-slate-200">{s.last_name}</TableCell>
-                    <TableCell className="text-slate-200">{s.gender}</TableCell>
-                    <TableCell className="text-slate-200">{s.year_level}</TableCell>
-                    <TableCell className="text-slate-200">{s.program_code}</TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </div>
       </main>
 
+      {/* Edit dialog */}
+      {editingStudent && (
+        <AddStudentDialog
+          triggerButton={false}
+          open={open}
+          onOpenChange={setOpen}
+          editingStudent={editingStudent}
+          onStudentUpdated={() => {
+            fetchStudents()
+            setEditingStudent(null)
+            setOpen(false)
+          }}
+        />
+      )}
+
+      {/* Pagination */}
       <Pagination>
         <PaginationContent>
           <PaginationItem>

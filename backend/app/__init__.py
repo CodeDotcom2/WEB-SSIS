@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_cors import CORS
 from . import database
+import setup_db
 from .config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY
 
 login_manager = LoginManager()
@@ -34,7 +35,8 @@ def create_app():
     from .program import program_bp
     app.register_blueprint(program_bp)
 
-
+    setup_db.create_tables()
+    
     @login_manager.user_loader
     def load_user(user_id):
         from .models import Users

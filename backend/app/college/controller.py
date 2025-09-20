@@ -45,3 +45,11 @@ def add_college():
         "id": new_college.id
     })
 
+# DELETE /dashboard/colleges/<college_id>
+@college_bp.route("/colleges/<int:college_id>", methods=["DELETE"])
+@csrf.exempt
+def delete_college(college_id):
+    success, msg = College.delete_college(college_id)
+    if success:
+        return jsonify({"message": msg})
+    return jsonify({"error": msg}), 404

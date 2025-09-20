@@ -117,8 +117,10 @@
 }
 
 .glass2 {
-  @apply backdrop-blur-3xl bg-white/3 shadow-lg border border-white/10;
+  @apply backdrop-blur-3xl bg-black/40 shadow-lg border border-white/10;
 }
+
+
 
 
 

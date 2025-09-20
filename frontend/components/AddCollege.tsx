@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,7 @@ export default function AddCollegeDialog({ onAdd }: { onAdd: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="blue" size="lg">Add College</Button>
+        <Button variant="blue" size="lg"><Plus className="w-5 h-5" />Add College</Button>
       </DialogTrigger>
       <DialogContent className="glass2 sm:max-w-[425px]">
         <DialogHeader>

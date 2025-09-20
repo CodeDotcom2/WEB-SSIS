@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search } from "lucide-react"
+import { Search, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -28,23 +28,41 @@ export default function CollegesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
-  useEffect(() => {
-    async function fetchColleges() {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
-        const data = await res.json()
-        setColleges(data.colleges)
-      } catch (err) {
-        console.error("Error fetching colleges:", err)
-      } finally {
-        setLoading(false)
-      }
+  async function fetchColleges() {
+    setLoading(true)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
+      const data = await res.json()
+      setColleges(data.colleges)
+    } catch (err) {
+      console.error("Error fetching colleges:", err)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  async function deleteCollege(id: number, name: string) {
+    if (!confirm(`Are you sure you want to delete college "${name}"?`)) return
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges/${id}`, {
+        method: "DELETE",
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert(data.message)
+        await fetchColleges()
+      } else {
+        alert(data.error || "Failed to delete college")
+      }
+    } catch (err) {
+      console.error("Error deleting college:", err)
+    }
+  }
+
+  useEffect(() => {
     fetchColleges()
   }, [])
 
-  // Simple search filter (future enhancement: debounce, API search)
   const filteredColleges = colleges.filter(
     (c) =>
       c.college_code.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,7 +74,6 @@ export default function CollegesPage() {
       <main className="flex flex-col flex-1 p-6 gap-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <h1 className="text-white text-3xl font-bold">Manage Colleges</h1>
-
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
@@ -70,26 +87,7 @@ export default function CollegesPage() {
         </div>
 
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
-          <AddCollegeDialog
-            onAdd={async () => {
-              setLoading(true)
-              try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
-                const data = await res.json()
-                setColleges(data.colleges)
-              } catch (err) {
-                console.error(err)
-              } finally {
-                setLoading(false)
-              }
-            }}
-          />
-          <Button variant="deleteEffect" size="lg">
-            Delete College
-          </Button>
-          <Button variant="editEffect" size="lg">
-            Edit College
-          </Button>
+          <AddCollegeDialog onAdd={fetchColleges} />
         </div>
 
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
@@ -101,12 +99,13 @@ export default function CollegesPage() {
                 <TableHead className="!text-slate-50">College Name</TableHead>
                 <TableHead className="!text-slate-50">Number of Programs</TableHead>
                 <TableHead className="!text-slate-50">Number of Students</TableHead>
+                <TableHead className="!text-slate-50">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-slate-300">
+                  <TableCell colSpan={5} className="text-slate-300">
                     Loading...
                   </TableCell>
                 </TableRow>
@@ -117,11 +116,20 @@ export default function CollegesPage() {
                     <TableCell className="text-slate-200">{c.college_name}</TableCell>
                     <TableCell className="text-slate-200">{c.num_programs}</TableCell>
                     <TableCell className="text-slate-200">{c.num_students}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="deleteEffect"
+                        size="sm"
+                        onClick={() => deleteCollege(c.id, c.college_name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-slate-300">
+                  <TableCell colSpan={5} className="text-slate-300">
                     No colleges found.
                   </TableCell>
                 </TableRow>

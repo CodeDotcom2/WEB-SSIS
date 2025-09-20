@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { UserRoundPlus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: () => void }) {
+export default function AddStudentDialog({
+  onStudentAdded,
+  onStudentUpdated,
+  editingStudent,
+  triggerButton = true, // show default button if true
+  open,
+  onOpenChange,
+}: {
+  onStudentAdded?: () => void
+  onStudentUpdated?: () => void
+  editingStudent?: any
+  triggerButton?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
   const [colleges, setColleges] = useState<any[]>([])
   const [programs, setPrograms] = useState<any[]>([])
   const [filteredPrograms, setFilteredPrograms] = useState<any[]>([])
@@ -25,6 +40,22 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
     program_id: "",
   })
 
+  // populate when editing
+  useEffect(() => {
+    if (editingStudent) {
+      setFormData({
+        last_name: editingStudent.last_name || "",
+        first_name: editingStudent.first_name || "",
+        id_number: editingStudent.id_number || "",
+        gender: editingStudent.gender || "",
+        year_level: editingStudent.year_level || "",
+        college_id: editingStudent.college_id || "",
+        program_id: editingStudent.program_id || "",
+      })
+    }
+  }, [editingStudent])
+
+  // fetch dropdown data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -32,12 +63,6 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
         const programRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`)
         const collegeData = await collegeRes.json()
         const programData = await programRes.json()
-
-        console.log("Colleges:", collegeData)
-        console.log("Programs:", programData)
-
-        // ✅ log one sample program
-        console.log("Sample program object:", (programData.programs || programData)[0])
 
         setColleges(collegeData.colleges || collegeData)
         setPrograms(programData.programs || programData)
@@ -48,11 +73,10 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
     fetchData()
   }, [])
 
+  // filter programs by college
   useEffect(() => {
     if (formData.college_id) {
       const filtered = programs.filter((p) => String(p.college_id) === String(formData.college_id))
-      console.log("Selected college_id:", formData.college_id)
-      console.log("Filtered programs:", filtered)
       setFilteredPrograms(filtered)
       setFormData((prev) => ({ ...prev, program_id: "" }))
     } else {
@@ -67,41 +91,63 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`, {
-        method: "POST",
+      const url = editingStudent
+        ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students/${editingStudent.id_number}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`
+
+      const method = editingStudent ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
-      if (!res.ok) throw new Error("Failed to add student")
+      if (!res.ok) throw new Error("Failed to save student")
 
-      setFormData({
-        last_name: "",
-        first_name: "",
-        id_number: "",
-        gender: "",
-        year_level: "",
-        college_id: "",
-        program_id: "",
-      })
+      if (!editingStudent) {
+        // reset only if adding
+        setFormData({
+          last_name: "",
+          first_name: "",
+          id_number: "",
+          gender: "",
+          year_level: "",
+          college_id: "",
+          program_id: "",
+        })
+        onStudentAdded && onStudentAdded()
+      } else {
+        onStudentUpdated && onStudentUpdated()
+      }
 
-      onStudentAdded()
+      // close dialog after success
+      onOpenChange?.(false)
     } catch (err) {
-      console.error("Error adding student:", err)
+      console.error("Error saving student:", err)
     }
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="blue" size="lg">Add Student</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          <Button variant="blue" size="lg">
+            <UserRoundPlus className="w-5 h-5" />
+            Add Student
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="glass2 sm:max-w-fit">
         <DialogHeader>
-          <DialogTitle className="text-white">Add Student</DialogTitle>
+          <DialogTitle className="text-white">
+            {editingStudent ? "Edit Student" : "Add Student"}
+          </DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new student.
+            {editingStudent
+              ? "Update the details below to edit the student."
+              : "Fill in the details below to add a new student."}
           </DialogDescription>
         </DialogHeader>
 
@@ -134,6 +180,7 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
             type="text"
             placeholder="ID Number"
             required
+            disabled={!!editingStudent}
             className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
 
@@ -145,9 +192,15 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
               required
               className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option value="" disabled hidden>Select Gender</option>
-              <option className="bg-gray-900 text-white" value="Male">Male</option>
-              <option className="bg-gray-900 text-white" value="Female">Female</option>
+              <option value="" disabled hidden>
+                Select Gender
+              </option>
+              <option className="bg-gray-900 text-white" value="Male">
+                Male
+              </option>
+              <option className="bg-gray-900 text-white" value="Female">
+                Female
+              </option>
             </select>
 
             <select
@@ -157,11 +210,21 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
               required
               className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option value="" disabled hidden>Select Year Level</option>
-              <option className="bg-gray-900 text-white" value="1">1st Year</option>
-              <option className="bg-gray-900 text-white" value="2">2nd Year</option>
-              <option className="bg-gray-900 text-white" value="3">3rd Year</option>
-              <option className="bg-gray-900 text-white" value="4">4th Year</option>
+              <option value="" disabled hidden>
+                Select Year Level
+              </option>
+              <option className="bg-gray-900 text-white" value="1">
+                1st Year
+              </option>
+              <option className="bg-gray-900 text-white" value="2">
+                2nd Year
+              </option>
+              <option className="bg-gray-900 text-white" value="3">
+                3rd Year
+              </option>
+              <option className="bg-gray-900 text-white" value="4">
+                4th Year
+              </option>
             </select>
           </div>
 
@@ -169,13 +232,13 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
             <select
               name="college_id"
               value={formData.college_id}
-              onChange={(e) => {
+              onChange={(e) =>
                 setFormData({
                   ...formData,
                   college_id: e.target.value,
                   program_id: "",
                 })
-              }}
+              }
               required
               className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
@@ -207,7 +270,9 @@ export default function AddStudentDialog({ onStudentAdded }: { onStudentAdded: (
             </select>
           </div>
 
-          <Button variant="blue" type="submit" className="self-end">Save</Button>
+          <Button variant="blue" type="submit" className="self-end">
+            {editingStudent ? "Update" : "Save"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
