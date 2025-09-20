@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import {
   Dialog,
@@ -9,76 +10,136 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-  DialogClose
 } from "@/components/ui/dialog"
-import { useState } from "react"
 
-export default function AddCollegeDialog({ onAdd }: { onAdd: () => void }) {
-  const [collegeName, setCollegeName] = useState("")
-  const [collegeCode, setCollegeCode] = useState("")
+export default function AddCollegeDialog({
+  onCollegeAdded,
+  onCollegeUpdated,
+  editingCollege,
+  triggerButton = true,
+  open,
+  onOpenChange,
+}: {
+  onCollegeAdded?: () => void
+  onCollegeUpdated?: () => void
+  editingCollege?: any
+  triggerButton?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
+  const [formData, setFormData] = useState({
+    college_name: "",
+    college_code: "",
+  })
   const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // populate when editing
+  useEffect(() => {
+    if (editingCollege) {
+      setFormData({
+        college_name: editingCollege.college_name || "",
+        college_code: editingCollege.college_code || "",
+      })
+    } else {
+      setFormData({ college_name: "", college_code: "" })
+    }
+  }, [editingCollege])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!collegeName || !collegeCode) return
-
+    if (!formData.college_name || !formData.college_code) return
     setLoading(true)
+
+    const method = editingCollege ? "PUT" : "POST"
+    const url = editingCollege
+      ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges/${editingCollege.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`
+
+    console.log("🔍 Submitting request", { url, method, formData })
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`, {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ college_name: collegeName, college_code: collegeCode }),
+        body: JSON.stringify({
+          college_code: formData.college_code,
+          college_name: formData.college_name,
+        }),
       })
 
+      console.log("🔍 Response status:", res.status)
 
-
-      if (res.ok) {
-        setCollegeName("")
-        setCollegeCode("")
-        onAdd()
-        setOpen(false) // Refresh parent list
-      } else {
-        const data = await res.json()
-        alert(data.error || "Failed to add college")
+      let data: any = {}
+      try {
+        data = await res.json()
+      } catch {
+        console.warn("⚠️ Response is not JSON")
       }
+      console.log("🔍 Response body:", data)
+
+      if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`)
+
+      if (editingCollege) {
+        onCollegeUpdated?.()
+      } else {
+        setFormData({ college_name: "", college_code: "" })
+        onCollegeAdded?.()
+      }
+
+      onOpenChange?.(false)
     } catch (err) {
-      console.error(err)
-      alert("Something went wrong")
+      console.error("❌ Submit error:", err)
+      alert(`Request failed. Check console.`)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="blue" size="lg"><Plus className="w-5 h-5" />Add College</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          <Button variant="blue" size="lg">
+            <Plus className="w-5 h-5" /> Add College
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent className="glass2 sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-white">Add College</DialogTitle>
+          <DialogTitle className="text-white">
+            {editingCollege ? "Edit College" : "Add College"}
+          </DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new College.
+            {editingCollege
+              ? "Update the details of the college."
+              : "Fill in the details below to add a new college."}
           </DialogDescription>
         </DialogHeader>
+
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
-            value={collegeName}
-            onChange={e => setCollegeName(e.target.value)}
+            name="college_name"
+            value={formData.college_name}
+            onChange={handleChange}
             type="text"
             placeholder="College Name"
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
           <input
-            value={collegeCode}
-            onChange={e => setCollegeCode(e.target.value)}
+            name="college_code"
+            value={formData.college_code}
+            onChange={handleChange}
             type="text"
             placeholder="College Code"
-            className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white placeholder-gray-400 focus:border-white focus:outline-none"
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
           <Button variant="blue" type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : editingCollege ? "Update" : "Save"}
           </Button>
         </form>
       </DialogContent>

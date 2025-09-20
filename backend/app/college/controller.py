@@ -53,3 +53,19 @@ def delete_college(college_id):
     if success:
         return jsonify({"message": msg})
     return jsonify({"error": msg}), 404
+
+
+# PUT /dashboard/colleges/<college_id>
+@college_bp.route("/colleges/<int:college_id>", methods=["PUT"])
+@csrf.exempt
+def update_college(college_id):
+    data = request.json
+    if not data.get("college_name") or not data.get("college_code"):
+        return jsonify({"error": "College name and code are required"}), 400
+
+    success = College.update_college(college_id, data["college_code"], data["college_name"])
+    if success:
+        return jsonify({"message": "College updated successfully"}), 200
+    return jsonify({"error": "Failed to update college"}), 400
+
+

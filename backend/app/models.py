@@ -159,6 +159,26 @@ class College:
             cursor.close()
             print(f"Error deleting college: {e}")
             return False, str(e)
+    @classmethod
+    def update_college(cls, college_id, college_code, college_name):
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            sql = """
+                UPDATE colleges
+                SET college_code = %s, college_name = %s
+                WHERE id = %s
+            """
+            cursor.execute(sql, (college_code, college_name, college_id))
+            db.commit()
+            cursor.close()
+            return True
+        except Exception as e:
+            db.rollback()
+            cursor.close()
+            print(f"Error updating college: {e}")
+            return False
+
 
 
 class Program:
