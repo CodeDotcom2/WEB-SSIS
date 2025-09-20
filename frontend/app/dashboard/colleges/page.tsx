@@ -120,7 +120,7 @@ export default function CollegesPage() {
                 </TableRow>
               ) : filteredColleges.length > 0 ? (
                 filteredColleges.map((c, i) => (
-                  <TableRow key={i} className="border-0">
+                  <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
                     <TableCell className="text-slate-200">{c.college_code}</TableCell>
                     <TableCell className="text-slate-200">{c.college_name}</TableCell>
                     <TableCell className="text-slate-200">{c.num_programs}</TableCell>
@@ -128,9 +128,9 @@ export default function CollegesPage() {
                     <TableCell className="flex gap-2 justify-center">
                       {/* Edit Button */}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                        className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
                         onClick={() => {
                           setEditingCollege(c)
                           setOpen(true)
@@ -190,7 +190,7 @@ export default function CollegesPage() {
             if (!o) setEditingCollege(null)
             setOpen(o)
           }}
-          triggerButton={false} // don’t render the “Add” button inside this one
+          triggerButton={false} 
         />
       )}
     </div>
