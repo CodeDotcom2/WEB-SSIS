@@ -124,7 +124,7 @@ export default function StudentsPage() {
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {["ID Number", "First Name", "Last Name", "Year Level", "Program"].map((option) => (
+                {["ID Number", "First Name", "Last Name", "Year Level"].map((option) => (
                   <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
                     {option}
                   </DropdownMenuItem>
