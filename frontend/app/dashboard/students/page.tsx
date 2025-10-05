@@ -117,7 +117,7 @@ export default function StudentsPage() {
 
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
-          <div className="flex gap-7 mb-2">
+          <div className="flex gap-2 mb-2">
             {/* Sort By */}
             <DropdownMenu>
               <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
