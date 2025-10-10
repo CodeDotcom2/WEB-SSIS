@@ -25,6 +25,8 @@ import AddCollegeDialog from "@/components/AddCollege"
 
 export default function CollegesPage() {
   const [colleges, setColleges] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [collegesPerPage, setCollegesPerPage] = useState(12)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [editingCollege, setEditingCollege] = useState<any | null>(null)
@@ -64,11 +66,20 @@ export default function CollegesPage() {
   useEffect(() => {
     fetchColleges()
   }, [])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
 
   const filteredColleges = colleges.filter(
     (c) =>
       c.college_code.toLowerCase().includes(search.toLowerCase()) ||
       c.college_name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredColleges.length / collegesPerPage)
+  const paginatedColleges = filteredColleges.slice(
+    (currentPage - 1) * collegesPerPage,
+    currentPage * collegesPerPage
   )
 
   return (
@@ -101,7 +112,6 @@ export default function CollegesPage() {
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
           <Table className="w-full table-auto border-collapse">
-            <TableCaption>All Colleges</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead className="!text-slate-50">College Code</TableHead>
@@ -118,8 +128,8 @@ export default function CollegesPage() {
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : filteredColleges.length > 0 ? (
-                filteredColleges.map((c, i) => (
+              ) : paginatedColleges.length > 0 ? (
+                paginatedColleges.map((c, i) => (
                   <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
                     <TableCell className="text-slate-200">{c.college_code}</TableCell>
                     <TableCell className="text-slate-200">{c.college_name}</TableCell>
@@ -166,17 +176,38 @@ export default function CollegesPage() {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious href="#" />
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage > 1) setCurrentPage(currentPage - 1)
+              }}/>
           </PaginationItem>
+
+          {[...Array(totalPages)].map((_, index) => (
+          <PaginationItem key={index}>
+            <PaginationLink
+              href="#"
+              isActive={currentPage === index + 1}
+              onClick={(e) => {
+                e.preventDefault()
+                setCurrentPage(index + 1)
+              }}
+            >
+              {index + 1}
+            </PaginationLink>
+          </PaginationItem>))}
+          
           <PaginationItem>
-            <PaginationLink href="#">1</PaginationLink>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+              }}
+            />
           </PaginationItem>
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext href="#" />
-          </PaginationItem>
+          
         </PaginationContent>
       </Pagination>
 

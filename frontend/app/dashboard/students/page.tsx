@@ -12,7 +12,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -32,7 +31,7 @@ import AddStudentDialog from "@/components/AddStudent"
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [studentsPerPage, setStudentsPerPage] = useState(10)
+  const [studentsPerPage, setStudentsPerPage] = useState(11)
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState("Sort By")
   const [order, setOrder] = useState("Ascending")
@@ -76,6 +75,9 @@ export default function StudentsPage() {
   useEffect(() => {
     fetchStudents()
   }, [])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, sortBy, order])
 
   const displayedStudents = students
     .filter((s) =>
@@ -158,7 +160,6 @@ export default function StudentsPage() {
           </div>
 
           <Table className="w-full table-auto border-collapse">
-            <TableCaption>All Students</TableCaption>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {["ID No.", "First Name", "Last Name", "Gender", "Year Level", "Program", "Actions"].map((header) => (
