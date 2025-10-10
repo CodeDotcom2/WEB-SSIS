@@ -31,6 +31,8 @@ import AddStudentDialog from "@/components/AddStudent"
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [studentsPerPage, setStudentsPerPage] = useState(10)
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState("Sort By")
   const [order, setOrder] = useState("Ascending")
@@ -90,6 +92,14 @@ export default function StudentsPage() {
       if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
       return String(fieldB).localeCompare(String(fieldA))
     })
+
+  const totalPages = Math.ceil(displayedStudents.length / studentsPerPage)
+  const paginatedStudents = displayedStudents.slice(
+    (currentPage - 1) * studentsPerPage,
+    currentPage * studentsPerPage
+  )
+
+
 
   return (
     <div className="h-screen flex flex-col">
@@ -160,7 +170,7 @@ export default function StudentsPage() {
             </TableHeader>
 
             <TableBody>
-              {displayedStudents.map((s, i) => (
+              {paginatedStudents.map((s, i) => (
                 <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
                   <TableCell className="text-slate-200">{s.id_number}</TableCell>
                   <TableCell className="text-slate-200">{s.first_name}</TableCell>
@@ -217,19 +227,40 @@ export default function StudentsPage() {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious href="#" />
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage > 1) setCurrentPage(currentPage - 1)
+              }}/>
           </PaginationItem>
-          <PaginationItem>
-            <PaginationLink href="#">1</PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext href="#" />
-          </PaginationItem>
+
+      {[...Array(totalPages)].map((_, index) => (
+        <PaginationItem key={index}>
+          <PaginationLink
+            href="#"
+            isActive={currentPage === index + 1}
+            onClick={(e) => {
+              e.preventDefault()
+              setCurrentPage(index + 1)
+            }}
+          >
+            {index + 1}
+          </PaginationLink>
+        </PaginationItem>
+      ))}
+
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+            }}
+          />
+        </PaginationItem>
         </PaginationContent>
-      </Pagination>
+    </Pagination>
     </div>
   )
 }
