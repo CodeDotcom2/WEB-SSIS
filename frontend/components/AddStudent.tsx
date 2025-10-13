@@ -16,7 +16,7 @@ export default function AddStudentDialog({
   onStudentAdded,
   onStudentUpdated,
   editingStudent,
-  triggerButton = true, // show default button if true
+  triggerButton = true,
   open,
   onOpenChange,
 }: {
@@ -39,6 +39,7 @@ export default function AddStudentDialog({
     college_id: "",
     program_id: "",
   })
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // populate when editing
   useEffect(() => {
@@ -52,6 +53,18 @@ export default function AddStudentDialog({
         college_id: editingStudent.college_id || "",
         program_id: editingStudent.program_id || "",
       })
+      setIsInitialLoad(true)
+    } else {
+      setFormData({
+        last_name: "",
+        first_name: "",
+        id_number: "",
+        gender: "",
+        year_level: "",
+        college_id: "",
+        program_id: "",
+      })
+      setIsInitialLoad(true)
     }
   }, [editingStudent])
 
@@ -78,7 +91,13 @@ export default function AddStudentDialog({
     if (formData.college_id) {
       const filtered = programs.filter((p) => String(p.college_id) === String(formData.college_id))
       setFilteredPrograms(filtered)
-      setFormData((prev) => ({ ...prev, program_id: "" }))
+      
+      // Only clear program_id if this is a user-initiated change (not initial load)
+      if (!isInitialLoad) {
+        setFormData((prev) => ({ ...prev, program_id: "" }))
+      } else {
+        setIsInitialLoad(false)
+      }
     } else {
       setFilteredPrograms([])
     }
@@ -89,24 +108,52 @@ export default function AddStudentDialog({
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const idRegex = /^\d{4}-\d{4}$/;
+
+    for (const [key, value] of Object.entries(formData)) {
+      if (!value) {
+        alert("All fields are required.");
+        return;
+      }
+    }
+
+    if (!nameRegex.test(formData.first_name) || !nameRegex.test(formData.last_name)) {
+      alert("Names should only contain letters and spaces (no numbers or symbols).");
+      return;
+    }
+
+    if (!idRegex.test(formData.id_number)) {
+      alert("ID Number must be in the format XXXX-XXXX (e.g. 2025-0001).");
+      return;
+    }
+
     try {
       const url = editingStudent
         ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students/${editingStudent.id_number}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`
+        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`;
 
-      const method = editingStudent ? "PUT" : "POST"
+      const method = editingStudent ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-      })
+      });
 
-      if (!res.ok) throw new Error("Failed to save student")
+      const data = await res.json();
 
+      if (!res.ok) {
+        alert(data.error || "Failed to save student.");
+        return;
+      }
+
+      alert(data.message || "Student saved successfully!");
+
+      // Reset form after adding
       if (!editingStudent) {
-        // reset only if adding
         setFormData({
           last_name: "",
           first_name: "",
@@ -115,18 +162,19 @@ export default function AddStudentDialog({
           year_level: "",
           college_id: "",
           program_id: "",
-        })
-        onStudentAdded && onStudentAdded()
+        });
+        onStudentAdded && onStudentAdded();
       } else {
-        onStudentUpdated && onStudentUpdated()
+        onStudentUpdated && onStudentUpdated();
       }
 
-      // close dialog after success
-      onOpenChange?.(false)
+      // Close dialog
+      onOpenChange?.(false);
     } catch (err) {
-      console.error("Error saving student:", err)
+      console.error("Error saving student:", err);
+      alert("Something went wrong while saving the student.");
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -232,13 +280,14 @@ export default function AddStudentDialog({
             <select
               name="college_id"
               value={formData.college_id}
-              onChange={(e) =>
+              onChange={(e) => {
+                setIsInitialLoad(false)
                 setFormData({
                   ...formData,
                   college_id: e.target.value,
                   program_id: "",
                 })
-              }
+              }}
               required
               className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >

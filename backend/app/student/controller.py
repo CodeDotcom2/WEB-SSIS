@@ -13,6 +13,33 @@ def list_students():
 @csrf.exempt
 def add_student():
     data = request.get_json()
+    import re
+    from app.database import get_db
+    
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT id_number FROM students WHERE id_number = %s", (data["id_number"],))
+    existing = cursor.fetchone()
+    cursor.close()
+
+    if existing:
+        return jsonify({"error": "ID number already exists"}), 400
+    name_regex = r"^[A-Za-z\s]+$"
+    id_regex = r"^\d{4}-\d{4}$"
+    
+    required_fields = ["id_number", "last_name", "first_name", "gender", "year_level", "college_id", "program_id"]
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"'{field}' is required"}), 400
+
+    # Validate names
+    if not re.match(name_regex, data["first_name"]) or not re.match(name_regex, data["last_name"]):
+        return jsonify({"error": "Names should contain only letters and spaces"}), 400
+
+    # Validate ID format
+    if not re.match(id_regex, data["id_number"]):
+        return jsonify({"error": "ID number must follow the format XXXX-XXXX (digits only)"}), 400
+
     student = models.Student(
         id_number=data.get("id_number"),
         last_name=data.get("last_name"),
