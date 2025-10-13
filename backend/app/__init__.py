@@ -11,10 +11,9 @@ csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_mapping(
-        SECRET_KEY=SECRET_KEY,
-        DATABASE_URL=f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+    app.config["SECRET_KEY"]=SECRET_KEY
+    app.config["DATABASE_URL"]=f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    
 
     csrf.init_app(app)
     database.init_app(app)
