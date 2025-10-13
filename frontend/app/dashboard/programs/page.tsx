@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -25,6 +24,8 @@ import AddProgramDialog from "@/components/AddProgram"
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [programsPerPage, setProgramsPage] = useState(12)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
@@ -67,12 +68,23 @@ export default function ProgramsPage() {
     fetchPrograms()
   }, [])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
+
   const filteredPrograms = programs.filter(
     (p) =>
       p.program_code.toLowerCase().includes(search.toLowerCase()) ||
       p.program_name.toLowerCase().includes(search.toLowerCase()) ||
       p.college_name.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filteredPrograms.length / programsPerPage)
+  const paginatedPrograms = filteredPrograms.slice(
+    (currentPage - 1) * programsPerPage,
+    currentPage * programsPerPage
+  )
+
 
   return (
     <div className="h-screen flex flex-col">
@@ -100,7 +112,6 @@ export default function ProgramsPage() {
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
           <Table className="w-full table-auto border-collapse">
-            <TableCaption>All Programs</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead className="!text-slate-50">Program Code</TableHead>
@@ -117,8 +128,8 @@ export default function ProgramsPage() {
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : filteredPrograms.length > 0 ? (
-                filteredPrograms.map((p, i) => (
+              ) : paginatedPrograms.length > 0 ? (
+                paginatedPrograms.map((p, i) => (
                   <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
                     <TableCell className="text-slate-200">{p.program_code}</TableCell>
                     <TableCell className="text-slate-200">{p.program_name}</TableCell>
@@ -181,16 +192,36 @@ export default function ProgramsPage() {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious href="#" />
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage > 1) setCurrentPage(currentPage - 1)
+              }}/>
           </PaginationItem>
+
+        {[...Array(totalPages)].map((_, index) => (
+          <PaginationItem key={index}>
+            <PaginationLink
+              href="#"
+              isActive={currentPage === index + 1}
+              onClick={(e) => {
+                e.preventDefault()
+                setCurrentPage(index + 1)
+              }}
+            >
+              {index + 1}
+            </PaginationLink>
+          </PaginationItem>))}
+
           <PaginationItem>
-            <PaginationLink href="#">1</PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext href="#" />
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+              }}
+            />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
