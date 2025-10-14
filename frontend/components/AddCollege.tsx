@@ -81,7 +81,12 @@ export default function AddCollegeDialog({
       }
       console.log("🔍 Response body:", data)
 
-      if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`)
+      if (!res.ok) {
+        alert(data.error || "Failed to add college.");
+        return;
+      }
+
+      alert(data.message || "College added successfully!");
 
       if (editingCollege) {
         onCollegeUpdated?.()
@@ -93,7 +98,7 @@ export default function AddCollegeDialog({
       onOpenChange?.(false)
     } catch (err) {
       console.error("❌ Submit error:", err)
-      alert(`Request failed. Check console.`)
+      alert("Something went wrong. Please check your connection or the console for details.")
     } finally {
       setLoading(false)
     }

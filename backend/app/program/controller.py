@@ -24,16 +24,33 @@ def get_programs():
 @program_bp.route("/programs", methods=["POST"])
 @csrf.exempt
 def add_program():
+    import re
+    from app.database import get_db
     try:
-        data = request.get_json(force=True)  # safer parsing
-        program_code = data.get("program_code")
-        program_name = data.get("program_name")
+        data = request.get_json(force=True)  
+        program_code = data.get("program_code").strip()
+        program_name = data.get("program_name").strip().lower()
         college_id = data.get("college_id")
 
         if not (program_code and program_name and college_id):
             return jsonify({"error": "program_code, program_name and college_id are required"}), 400
+        
+        name_regex = r"^[A-Za-z\s]+$"
+        if not re.match(name_regex, data["program_name"]) or not re.match(name_regex, data["program_code"]):
+            return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
-        program = Program(program_code=program_code, program_name=program_name, college_id=college_id)
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT program_name FROM programs WHERE LOWER(program_name) = %s", (program_name,))
+        existing = cursor.fetchone()
+        cursor.close()
+
+        if existing:
+            return jsonify({"error": "Program already exists"}), 400
+        
+        formatted_name =  data["program_name"].strip().title()
+
+        program = Program(program_code=program_code, program_name=formatted_name, college_id=college_id)
         program.add()
         return jsonify({
             "message": "Program added successfully",
@@ -67,16 +84,33 @@ def delete_program(program_id):
 @program_bp.route("/programs/<int:program_id>", methods=["PUT"])
 @csrf.exempt
 def update_program(program_id):
+    import re
+    from app.database import get_db
     try:
         data = request.get_json(force=True)
         program_code = data.get("program_code")
-        program_name = data.get("program_name")
+        program_name = data.get("program_name").strip().lower()
         college_id = data.get("college_id")
 
         if not (program_code and program_name and college_id):
             return jsonify({"error": "All fields required"}), 400
+        name_regex = r"^[A-Za-z\s]+$"
 
-        success = Program.update_program(program_id, program_code, program_name, college_id)
+        if not re.match(name_regex, data["program_name"]) or not re.match(name_regex, data["program_code"]):
+            return jsonify({"error": "Names should contain only letters and spaces"}), 400
+        
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT program_name FROM programs WHERE LOWER(program_name) = %s AND id != %s",(program_name, program_id),)
+        existing = cursor.fetchone()
+        cursor.close()
+        
+        if existing:
+            return jsonify({"error": "Program name already exists"}), 400
+
+        formatted_name =  data["program_name"].strip().title()
+
+        success = Program.update_program(program_id, program_code, formatted_name, college_id)
         if success:
             return jsonify({"message": "Program updated successfully"}), 200
         else:

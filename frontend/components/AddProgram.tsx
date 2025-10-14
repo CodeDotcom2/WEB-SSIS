@@ -69,13 +69,12 @@ export default function AddProgramDialog({
     if (!formData.program_name || !formData.program_code || !formData.college_id) return
     setLoading(true)
 
+    const method = editingProgram ? "PUT" : "POST"
+    const url = editingProgram
+      ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs/${editingProgram.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`
+
     try {
-      const url = editingProgram
-        ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs/${editingProgram.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`
-
-      const method = editingProgram ? "PUT" : "POST"
-
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -84,8 +83,19 @@ export default function AddProgramDialog({
           college_id: parseInt(formData.college_id, 10),
         }),
       })
+      
+      let data: any = {}
+      try {
+        data = await res.json()
+      } catch {
+        console.warn("⚠️ Response is not JSON")
+      }
+      if (!res.ok) {
+        alert(data.error || "Failed to add program.");
+        return;
+      }
 
-      if (!res.ok) throw new Error("Failed to save program")
+      alert(data.message || "Program added successfully!");
 
       if (editingProgram) {
         onProgramUpdated && onProgramUpdated()
@@ -96,7 +106,8 @@ export default function AddProgramDialog({
 
       onOpenChange?.(false) // close after success
     } catch (err) {
-      console.error(err)
+      console.error("❌ Submit error:",err)
+      alert("Something went wrong. Please check your connection or the console for details.")
     } finally {
       setLoading(false)
     }

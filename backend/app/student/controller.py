@@ -50,7 +50,18 @@ def add_student():
         program_id=data.get("program_id"),
     )
     student.add()
-    return jsonify({"message": "Student added successfully"}), 201
+    return jsonify({
+        "message": "Student added successfully",
+        "message":{
+            "id": student.id,
+            "id_number": student.id_number,
+            "last_name": student.last_name,
+            "first_name": student.first_name,
+            "gender": student.gender,
+            "year_level": student.year_level,
+            "college_id": student.college_id,
+            "program_id": student.program_id
+        }}), 201
 
 @student_bp.route("/students/<string:id_number>", methods=["DELETE"])
 @csrf.exempt
