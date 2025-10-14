@@ -245,6 +245,11 @@ export default function StudentsPage() {
               e.preventDefault()
               setCurrentPage(index + 1)
             }}
+            className={`${
+              currentPage === index + 1
+                ? "text-black font-semibold" // active page color
+                : "text-gray-300" // inactive pages
+            }`}
           >
             {index + 1}
           </PaginationLink>
