@@ -146,11 +146,11 @@ export default function AddStudentDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to save student.");
+        alert(data.error || "Failed to add student.");
         return;
       }
 
-      alert(data.message || "Student saved successfully!");
+      alert(data.message || "Student added successfully!");
 
       // Reset form after adding
       if (!editingStudent) {
