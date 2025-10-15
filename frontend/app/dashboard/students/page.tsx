@@ -80,11 +80,45 @@ export default function StudentsPage() {
   }, [search, sortBy, order])
 
   const displayedStudents = students
-    .filter((s) =>
-      `${s.first_name} ${s.last_name} ${s.id_number} ${s.program_code}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
+    .filter((s) => {
+    const query = search.toLowerCase().trim()
+
+    if (!query) return true
+
+    const yearLevelMap: Record<string, string> = {
+      "1": "1",
+      "1st": "1",
+      "first": "1",
+      "1st year": "1",
+      "2": "2",
+      "2nd": "2",
+      "second": "2",
+      "2nd year": "2",
+      "3": "3",
+      "3rd": "3",
+      "third": "3",
+      "3rd year": "3",
+      "4": "4",
+      "4th": "4",
+      "fourth": "4",
+      "4th year": "4",
+    }
+
+    // Gender must match exactly
+    const genderMatch =
+      ["male", "female", "others"].includes(query) &&
+      s.gender.toLowerCase() === query
+    
+    const mappedYear = yearLevelMap[query]
+    const yearLevelMatch = mappedYear && s.year_level.toString() === mappedYear
+
+    // Search by name, ID, program, year level, and college
+    const generalMatch = `${s.first_name} ${s.last_name} ${s.id_number} ${s.program_code} ${s.program_name || ""} ${s.college_name || ""}`
+      .toLowerCase()
+      .includes(query)
+
+    return genderMatch || generalMatch || yearLevelMatch
+    })
     .sort((a, b) => {
       if (sortBy === "Sort By") return 0
       const fieldKey = sortBy.toLowerCase().replace(" ", "_")
