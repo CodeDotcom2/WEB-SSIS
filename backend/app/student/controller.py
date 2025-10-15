@@ -50,10 +50,11 @@ def add_student():
         program_id=data.get("program_id"),
     )
     student.add()
+    print("✅ Student added route reached")
     return jsonify({
         "message": "Student added successfully",
-        "message":{
-            "id": student.id,
+        "student":{
+            "id_number": student.id_number,
             "id_number": student.id_number,
             "last_name": student.last_name,
             "first_name": student.first_name,

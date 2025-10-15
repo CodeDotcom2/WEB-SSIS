@@ -88,20 +88,29 @@ export default function AddStudentDialog({
 
   // filter programs by college
   useEffect(() => {
-    if (formData.college_id) {
-      const filtered = programs.filter((p) => String(p.college_id) === String(formData.college_id))
-      setFilteredPrograms(filtered)
-      
-      // Only clear program_id if this is a user-initiated change (not initial load)
-      if (!isInitialLoad) {
-        setFormData((prev) => ({ ...prev, program_id: "" }))
-      } else {
-        setIsInitialLoad(false)
-      }
+    if (!programs.length) return
+
+    const filtered = formData.college_id
+      ? programs.filter((p) => String(p.college_id) === String(formData.college_id))
+      : []
+
+    setFilteredPrograms(filtered)
+
+    // Don’t clear program_id during edit load
+    if (isInitialLoad) {
+      setIsInitialLoad(false)
     } else {
-      setFilteredPrograms([])
+      // Only clear if the user *manually* changes the college
+      setFormData((prev) => ({
+        ...prev,
+        program_id:
+          filtered.find((p) => String(p.id) === String(prev.program_id))
+            ? prev.program_id
+            : "",
+      }))
     }
   }, [formData.college_id, programs])
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
