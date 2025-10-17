@@ -13,6 +13,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -31,6 +37,8 @@ export default function CollegesPage() {
   const [search, setSearch] = useState("")
   const [editingCollege, setEditingCollege] = useState<any | null>(null)
   const [open, setOpen] = useState(false)
+  const [sortBy, setSortBy] = useState("Sort By")
+  const [order, setOrder] = useState("Ascending")
 
   async function fetchColleges() {
     setLoading(true)
@@ -70,12 +78,25 @@ export default function CollegesPage() {
     setCurrentPage(1)
   }, [search])
 
-  const filteredColleges = colleges.filter(
-    (c) =>
-      c.college_code.toLowerCase().includes(search.toLowerCase()) ||
-      c.college_name.toLowerCase().includes(search.toLowerCase())
-  )
-
+  const filteredColleges = colleges
+    .filter((c) => {
+      const query = search.toLowerCase().trim()
+      if (!query) return true
+      return (
+        c.college_code.toLowerCase().includes(query) ||
+        c.college_name.toLowerCase().includes(query)
+      )
+    })
+    .sort((a, b) => {
+      if (sortBy === "Sort By") return 0
+      const fieldKey = sortBy.toLowerCase().replace(" ", "_")
+      const fieldA = (a as any)[fieldKey]
+      const fieldB = (b as any)[fieldKey]
+      if (!fieldA || !fieldB) return 0
+      if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
+      return String(fieldB).localeCompare(String(fieldA))
+    })
+  
   const totalPages = Math.ceil(filteredColleges.length / collegesPerPage)
   const paginatedColleges = filteredColleges.slice(
     (currentPage - 1) * collegesPerPage,
@@ -111,6 +132,36 @@ export default function CollegesPage() {
 
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
+          <div className="flex gap-2 mb-2">
+            {/* Sort By */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {sortBy}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["College Name", "College Code"].map((option) => (
+                  <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Order */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {order}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["Ascending", "Descending"].map((option) => (
+                  <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <Table className="w-full table-auto border-collapse">
             <TableHeader>
               <TableRow>
