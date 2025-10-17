@@ -128,6 +128,7 @@ export default function ProgramsPage() {
         {/* Add Program */}
         <div className="flex glass rounded-lg gap-3 p-4 items-center shadow-lg">
           <AddProgramDialog onProgramAdded={fetchPrograms} />
+          <span>Total Programs: {programs.length}</span>
         </div>
 
         {/* Table */}
@@ -248,27 +249,100 @@ export default function ProgramsPage() {
               onClick={(e) => {
                 e.preventDefault()
                 if (currentPage > 1) setCurrentPage(currentPage - 1)
-              }}/>
+              }}
+            />
           </PaginationItem>
 
-        {[...Array(totalPages)].map((_, index) => (
-          <PaginationItem key={index}>
-            <PaginationLink
-              href="#"
-              isActive={currentPage === index + 1}
-              onClick={(e) => {
-                e.preventDefault()
-                setCurrentPage(index + 1)
-              }}
-              className={`${
-                currentPage === index + 1
-                  ? "text-black font-semibold" // active page color
-                  : "text-gray-300" // inactive pages
-              }`}
-            >
-              {index + 1}
-            </PaginationLink>
-          </PaginationItem>))}
+          {(() => {
+            const pageNumbers = []
+            const maxVisible = 4 // number of visible page buttons
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+            let endPage = startPage + maxVisible - 1
+
+            if (endPage > totalPages) {
+              endPage = totalPages
+              startPage = Math.max(1, endPage - maxVisible + 1)
+            }
+
+            // Show first page and ellipsis if needed
+            if (startPage > 1) {
+              pageNumbers.push(
+                <PaginationItem key={1}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === 1}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setCurrentPage(1)
+                    }}
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+              )
+
+              // Only show ellipsis if gap is larger than 1 page
+              if (startPage > 2) {
+                pageNumbers.push(
+                  <PaginationItem key="start-ellipsis">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )
+              }
+            }
+
+            // Visible range of pages
+            for (let i = startPage; i <= endPage; i++) {
+              pageNumbers.push(
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === i}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setCurrentPage(i)
+                    }}
+                    className={`${
+                      currentPage === i
+                        ? "text-black font-semibold"
+                        : "text-gray-300"
+                    }`}
+                  >
+                    {i}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+
+            // Show ellipsis and last page if needed
+            if (endPage < totalPages) {
+              // Only show ellipsis if more than one page gap
+              if (endPage < totalPages - 1) {
+                pageNumbers.push(
+                  <PaginationItem key="end-ellipsis">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )
+              }
+
+              pageNumbers.push(
+                <PaginationItem key={totalPages}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === totalPages}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setCurrentPage(totalPages)
+                    }}
+                  >
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+
+            return pageNumbers
+          })()}
 
           <PaginationItem>
             <PaginationNext
