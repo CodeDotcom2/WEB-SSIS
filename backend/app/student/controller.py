@@ -39,11 +39,15 @@ def add_student():
     # Validate ID format
     if not re.match(id_regex, data["id_number"]):
         return jsonify({"error": "ID number must follow the format XXXX-XXXX (digits only)"}), 400
+    
+
+    formatted_Lastname = data["last_name"].strip().title()
+    formatted_Firstname = data["first_name"].strip().title()
 
     student = models.Student(
         id_number=data.get("id_number"),
-        last_name=data.get("last_name"),
-        first_name=data.get("first_name"),
+        last_name= formatted_Lastname,
+        first_name=formatted_Firstname,
         gender=data.get("gender"),
         year_level=data.get("year_level"),
         college_id=data.get("college_id"),
