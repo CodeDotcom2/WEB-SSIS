@@ -12,6 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -28,6 +34,8 @@ export default function ProgramsPage() {
   const [programsPerPage, setProgramsPage] = useState(12)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sortBy, setSortBy] = useState("Sort By")
+  const [order, setOrder] = useState("Ascending")
 
   // editing dialog
   const [editingProgram, setEditingProgram] = useState<any | null>(null)
@@ -72,12 +80,25 @@ export default function ProgramsPage() {
     setCurrentPage(1)
   }, [search])
 
-  const filteredPrograms = programs.filter(
-    (p) =>
-      p.program_code.toLowerCase().includes(search.toLowerCase()) ||
-      p.program_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.college_name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredPrograms = programs
+  .filter((p) => {
+    const query = search.toLowerCase().trim()
+      if (!query) return true
+      return(
+        p.program_code.toLowerCase().includes(search.toLowerCase()) ||
+        p.program_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.college_name.toLowerCase().includes(search.toLowerCase())
+      )
+    })
+  .sort((a, b) => {
+      if (sortBy === "Sort By") return 0
+      const fieldKey = sortBy.toLowerCase().replace(" ", "_")
+      const fieldA = (a as any)[fieldKey]
+      const fieldB = (b as any)[fieldKey]
+      if (!fieldA || !fieldB) return 0
+      if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
+      return String(fieldB).localeCompare(String(fieldA))
+    })
 
   const totalPages = Math.ceil(filteredPrograms.length / programsPerPage)
   const paginatedPrograms = filteredPrograms.slice(
@@ -111,6 +132,36 @@ export default function ProgramsPage() {
 
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
+          <div className="flex gap-2 mb-2">
+            {/* Sort By */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {sortBy}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["Program Name", "Program Code"].map((option) => (
+                  <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Order */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+                {order}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {["Ascending", "Descending"].map((option) => (
+                  <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <Table className="w-full table-auto border-collapse">
             <TableHeader>
               <TableRow>
