@@ -29,11 +29,6 @@ def create_app():
     from .college import college_bp
     from .program import program_bp
 
-    csrf.exempt(user_bp)
-    csrf.exempt(student_bp)
-    csrf.exempt(college_bp)
-    csrf.exempt(program_bp)
-
     app.register_blueprint(user_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(college_bp)
