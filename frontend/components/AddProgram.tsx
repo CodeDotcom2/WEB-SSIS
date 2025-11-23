@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 export default function AddProgramDialog({
   onProgramAdded,
@@ -20,20 +20,20 @@ export default function AddProgramDialog({
   open,
   onOpenChange,
 }: {
-  onProgramAdded?: () => void
-  onProgramUpdated?: () => void
-  editingProgram?: any
-  triggerButton?: boolean
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+  onProgramAdded?: () => void;
+  onProgramUpdated?: () => void;
+  editingProgram?: any;
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [colleges, setColleges] = useState<any[]>([])
+  const [colleges, setColleges] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     program_name: "",
     program_code: "",
     college_id: "",
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
 
   // populate when editing
   useEffect(() => {
@@ -42,37 +42,46 @@ export default function AddProgramDialog({
         program_name: editingProgram.program_name || "",
         program_code: editingProgram.program_code || "",
         college_id: editingProgram.college_id?.toString() || "",
-      })
+      });
     }
-  }, [editingProgram])
+  }, [editingProgram]);
 
   // fetch colleges
   useEffect(() => {
     async function fetchColleges() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
-        const data = await res.json()
-        setColleges(data.colleges || [])
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+        );
+        const data = await res.json();
+        setColleges(data.colleges || []);
       } catch (err) {
-        console.error("Error fetching colleges:", err)
+        console.error("Error fetching colleges:", err);
       }
     }
-    fetchColleges()
-  }, [])
+    fetchColleges();
+  }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!formData.program_name || !formData.program_code || !formData.college_id) return
-    setLoading(true)
+    e.preventDefault();
+    if (
+      !formData.program_name ||
+      !formData.program_code ||
+      !formData.college_id
+    )
+      return;
+    setLoading(true);
 
-    const method = editingProgram ? "PUT" : "POST"
+    const method = editingProgram ? "PUT" : "POST";
     const url = editingProgram
-      ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs/${editingProgram.id}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs/${editingProgram.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`;
 
     try {
       const res = await fetch(url, {
@@ -82,13 +91,13 @@ export default function AddProgramDialog({
           ...formData,
           college_id: parseInt(formData.college_id, 10),
         }),
-      })
-      
-      let data: any = {}
+      });
+
+      let data: any = {};
       try {
-        data = await res.json()
+        data = await res.json();
       } catch {
-        console.warn("⚠️ Response is not JSON")
+        console.warn("⚠️ Response is not JSON");
       }
       if (!res.ok) {
         alert(data.error || "Failed to add program.");
@@ -98,18 +107,20 @@ export default function AddProgramDialog({
       alert(data.message || "Program added successfully!");
 
       if (editingProgram) {
-        onProgramUpdated && onProgramUpdated()
+        onProgramUpdated && onProgramUpdated();
       } else {
-        setFormData({ program_name: "", program_code: "", college_id: "" })
-        onProgramAdded && onProgramAdded()
+        setFormData({ program_name: "", program_code: "", college_id: "" });
+        onProgramAdded && onProgramAdded();
       }
 
-      onOpenChange?.(false) // close after success
+      onOpenChange?.(false); // close after success
     } catch (err) {
-      console.error("❌ Submit error:",err)
-      alert("Something went wrong. Please check your connection or the console for details.")
+      console.error("❌ Submit error:", err);
+      alert(
+        "Something went wrong. Please check your connection or the console for details."
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -159,9 +170,15 @@ export default function AddProgramDialog({
             required
             className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
           >
-            <option value="" disabled hidden>Select College</option>
+            <option value="" disabled hidden>
+              Select College
+            </option>
             {colleges.map((c) => (
-              <option key={c.id} value={c.id} className="bg-gray-900 text-white">
+              <option
+                key={c.id}
+                value={c.id}
+                className="bg-gray-900 text-white"
+              >
                 {c.college_name}
               </option>
             ))}
@@ -172,5 +189,5 @@ export default function AddProgramDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

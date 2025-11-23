@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { UserRoundPlus } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { UserRoundPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 export default function AddStudentDialog({
   onStudentAdded,
@@ -20,16 +20,16 @@ export default function AddStudentDialog({
   open,
   onOpenChange,
 }: {
-  onStudentAdded?: () => void
-  onStudentUpdated?: () => void
-  editingStudent?: any
-  triggerButton?: boolean
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+  onStudentAdded?: () => void;
+  onStudentUpdated?: () => void;
+  editingStudent?: any;
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [colleges, setColleges] = useState<any[]>([])
-  const [programs, setPrograms] = useState<any[]>([])
-  const [filteredPrograms, setFilteredPrograms] = useState<any[]>([])
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [filteredPrograms, setFilteredPrograms] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     last_name: "",
     first_name: "",
@@ -38,8 +38,8 @@ export default function AddStudentDialog({
     year_level: "",
     college_id: "",
     program_id: "",
-  })
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // populate when editing
   useEffect(() => {
@@ -52,8 +52,8 @@ export default function AddStudentDialog({
         year_level: editingStudent.year_level || "",
         college_id: editingStudent.college_id || "",
         program_id: editingStudent.program_id || "",
-      })
-      setIsInitialLoad(true)
+      });
+      setIsInitialLoad(true);
     } else {
       setFormData({
         last_name: "",
@@ -63,58 +63,66 @@ export default function AddStudentDialog({
         year_level: "",
         college_id: "",
         program_id: "",
-      })
-      setIsInitialLoad(true)
+      });
+      setIsInitialLoad(true);
     }
-  }, [editingStudent])
+  }, [editingStudent]);
 
   // fetch dropdown data
   useEffect(() => {
     async function fetchData() {
       try {
-        const collegeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
-        const programRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/programs`)
-        const collegeData = await collegeRes.json()
-        const programData = await programRes.json()
+        const collegeRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+        );
+        const programRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`
+        );
+        const collegeData = await collegeRes.json();
+        const programData = await programRes.json();
 
-        setColleges(collegeData.colleges || collegeData)
-        setPrograms(programData.programs || programData)
+        setColleges(collegeData.colleges || collegeData);
+        setPrograms(programData.programs || programData);
       } catch (err) {
-        console.error("Error fetching dropdowns:", err)
+        console.error("Error fetching dropdowns:", err);
       }
     }
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   // filter programs by college
   useEffect(() => {
-    if (!programs.length) return
+    if (!programs.length) return;
 
     const filtered = formData.college_id
-      ? programs.filter((p) => String(p.college_id) === String(formData.college_id))
-      : []
+      ? programs.filter(
+          (p) => String(p.college_id) === String(formData.college_id)
+        )
+      : [];
 
-    setFilteredPrograms(filtered)
+    setFilteredPrograms(filtered);
 
     // Don’t clear program_id during edit load
     if (isInitialLoad) {
-      setIsInitialLoad(false)
+      setIsInitialLoad(false);
     } else {
       // Only clear if the user *manually* changes the college
       setFormData((prev) => ({
         ...prev,
-        program_id:
-          filtered.find((p) => String(p.id) === String(prev.program_id))
-            ? prev.program_id
-            : "",
-      }))
+        program_id: filtered.find(
+          (p) => String(p.id) === String(prev.program_id)
+        )
+          ? prev.program_id
+          : "",
+      }));
     }
-  }, [formData.college_id, programs])
+  }, [formData.college_id, programs]);
 
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,8 +137,13 @@ export default function AddStudentDialog({
       }
     }
 
-    if (!nameRegex.test(formData.first_name) || !nameRegex.test(formData.last_name)) {
-      alert("Names should only contain letters and spaces (no numbers or symbols).");
+    if (
+      !nameRegex.test(formData.first_name) ||
+      !nameRegex.test(formData.last_name)
+    ) {
+      alert(
+        "Names should only contain letters and spaces (no numbers or symbols)."
+      );
       return;
     }
 
@@ -141,8 +154,8 @@ export default function AddStudentDialog({
 
     try {
       const url = editingStudent
-        ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students/${editingStudent.id_number}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`;
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students/${editingStudent.id_number}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students`;
 
       const method = editingStudent ? "PUT" : "POST";
 
@@ -290,21 +303,30 @@ export default function AddStudentDialog({
               name="college_id"
               value={formData.college_id}
               onChange={(e) => {
-                setIsInitialLoad(false)
+                setIsInitialLoad(false);
                 setFormData({
                   ...formData,
                   college_id: e.target.value,
                   program_id: "",
-                })
+                });
               }}
               required
               className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option className="bg-gray-900 text-white" value="" disabled hidden>
+              <option
+                className="bg-gray-900 text-white"
+                value=""
+                disabled
+                hidden
+              >
                 Select College
               </option>
               {colleges.map((c: any) => (
-                <option key={c.id} value={c.id} className="bg-gray-900 text-white">
+                <option
+                  key={c.id}
+                  value={c.id}
+                  className="bg-gray-900 text-white"
+                >
                   {c.college_name}
                 </option>
               ))}
@@ -317,11 +339,20 @@ export default function AddStudentDialog({
               required
               className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
             >
-              <option value="" disabled hidden className="bg-gray-900 text-white">
+              <option
+                value=""
+                disabled
+                hidden
+                className="bg-gray-900 text-white"
+              >
                 Select Program
               </option>
               {filteredPrograms.map((p: any) => (
-                <option key={p.id} value={p.id} className="bg-gray-900 text-white">
+                <option
+                  key={p.id}
+                  value={p.id}
+                  className="bg-gray-900 text-white"
+                >
                   {p.program_name}
                 </option>
               ))}
@@ -334,5 +365,5 @@ export default function AddStudentDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -15,10 +15,11 @@ def create_app():
     app.config["SECRET_KEY"]=SECRET_KEY
     app.config["DATABASE_URL"]=f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     
+    CORS(app, supports_credentials=True, origins=["http://localhost:5000", "http://127.0.0.1:5000"])
 
     csrf.init_app(app)
     database.init_app(app)
-    CORS(app, supports_credentials=True)
+
 
     login_manager.init_app(app)
     login_manager.login_view = 'user.login'
@@ -27,6 +28,11 @@ def create_app():
     from .student import student_bp
     from .college import college_bp
     from .program import program_bp
+
+    csrf.exempt(user_bp)
+    csrf.exempt(student_bp)
+    csrf.exempt(college_bp)
+    csrf.exempt(program_bp)
 
     app.register_blueprint(user_bp)
     app.register_blueprint(student_bp)

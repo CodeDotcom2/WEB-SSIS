@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 export default function AddCollegeDialog({
   onCollegeAdded,
@@ -20,18 +20,18 @@ export default function AddCollegeDialog({
   open,
   onOpenChange,
 }: {
-  onCollegeAdded?: () => void
-  onCollegeUpdated?: () => void
-  editingCollege?: any
-  triggerButton?: boolean
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+  onCollegeAdded?: () => void;
+  onCollegeUpdated?: () => void;
+  editingCollege?: any;
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [formData, setFormData] = useState({
     college_name: "",
     college_code: "",
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
 
   // populate when editing
   useEffect(() => {
@@ -39,27 +39,25 @@ export default function AddCollegeDialog({
       setFormData({
         college_name: editingCollege.college_name || "",
         college_code: editingCollege.college_code || "",
-      })
+      });
     } else {
-      setFormData({ college_name: "", college_code: "" })
+      setFormData({ college_name: "", college_code: "" });
     }
-  }, [editingCollege])
+  }, [editingCollege]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!formData.college_name || !formData.college_code) return
-    setLoading(true)
+    e.preventDefault();
+    if (!formData.college_name || !formData.college_code) return;
+    setLoading(true);
 
-    const method = editingCollege ? "PUT" : "POST"
+    const method = editingCollege ? "PUT" : "POST";
     const url = editingCollege
-      ? `${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges/${editingCollege.id}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`
-
-    console.log("🔍 Submitting request", { url, method, formData })
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges/${editingCollege.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`;
 
     try {
       const res = await fetch(url, {
@@ -69,17 +67,17 @@ export default function AddCollegeDialog({
           college_code: formData.college_code,
           college_name: formData.college_name,
         }),
-      })
+      });
 
-      console.log("🔍 Response status:", res.status)
+      console.log("🔍 Response status:", res.status);
 
-      let data: any = {}
+      let data: any = {};
       try {
-        data = await res.json()
+        data = await res.json();
       } catch {
-        console.warn("⚠️ Response is not JSON")
+        console.warn("⚠️ Response is not JSON");
       }
-      console.log("🔍 Response body:", data)
+      console.log("🔍 Response body:", data);
 
       if (!res.ok) {
         alert(data.error || "Failed to add college.");
@@ -89,18 +87,20 @@ export default function AddCollegeDialog({
       alert(data.message || "College added successfully!");
 
       if (editingCollege) {
-        onCollegeUpdated?.()
+        onCollegeUpdated?.();
       } else {
-        setFormData({ college_name: "", college_code: "" })
-        onCollegeAdded?.()
+        setFormData({ college_name: "", college_code: "" });
+        onCollegeAdded?.();
       }
 
-      onOpenChange?.(false)
+      onOpenChange?.(false);
     } catch (err) {
-      console.error("❌ Submit error:", err)
-      alert("Something went wrong. Please check your connection or the console for details.")
+      console.error("❌ Submit error:", err);
+      alert(
+        "Something went wrong. Please check your connection or the console for details."
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -149,5 +149,5 @@ export default function AddCollegeDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

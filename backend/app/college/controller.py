@@ -41,7 +41,7 @@ def add_college():
     if not college_name or not college_code:
         return jsonify({"error": "College name and code are required"}), 400
 
-    name_regex = r"^[A-Za-z\s]+$"
+    name_regex = r"^[A-Za-z\s,\-]+$"
     if not re.match(name_regex, data["college_name"]) or not re.match(name_regex, data["college_code"]):
         return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
@@ -95,7 +95,7 @@ def update_college(college_id):
     if not college_name or not data.get("college_code"):
         return jsonify({"error": "College name and code are required"}), 400
 
-    name_regex = r"^[a-z\s]+$"
+    name_regex = r"^[A-Za-z\s,\-]+$"
     if not re.match(name_regex, data["college_name"]) or not re.match(name_regex, data["college_code"]):
         return jsonify({"error": "Names should contain only letters and spaces"}), 400
 

@@ -35,7 +35,7 @@ def add_program():
         if not (program_code and program_name and college_id):
             return jsonify({"error": "program_code, program_name and college_id are required"}), 400
         
-        name_regex = r"^[A-Za-z\s]+$"
+        name_regex = r"^[A-Za-z\s,\-]+$"
         if not re.match(name_regex, data["program_name"]) or not re.match(name_regex, data["program_code"]):
             return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
