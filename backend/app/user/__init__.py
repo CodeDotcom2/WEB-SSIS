@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-user_bp = Blueprint("user", __name__, url_prefix="/auth")
+user_bp = Blueprint("user", __name__, url_prefix="/api/auth")
 
 from . import controller

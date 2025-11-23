@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Search, Trash2, Pencil } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Search, Trash2, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -25,117 +25,131 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
-import AddStudentDialog from "@/components/AddStudent"
+} from "@/components/ui/pagination";
+import AddStudentDialog from "@/components/AddStudent";
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<any[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [studentsPerPage, setStudentsPerPage] = useState(11)
-  const [loading, setLoading] = useState(true)
-  const [sortBy, setSortBy] = useState("Sort By")
-  const [order, setOrder] = useState("Ascending")
-  const [search, setSearch] = useState("")
+  const [students, setStudents] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentsPerPage, setStudentsPerPage] = useState(11);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("Sort By");
+  const [order, setOrder] = useState("Ascending");
+  const [search, setSearch] = useState("");
 
   // editing dialog
-  const [editingStudent, setEditingStudent] = useState<any | null>(null)
-  const [open, setOpen] = useState(false)
+  const [editingStudent, setEditingStudent] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
+
+  console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
 
   async function fetchStudents() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students`)
-      const data = await res.json()
-      setStudents(Array.isArray(data) ? data : data.students || [])
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students`,
+        {
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      setStudents(Array.isArray(data) ? data : data.students || []);
     } catch (err) {
-      console.error("Error fetching students:", err)
-      setStudents([])
+      console.error("Error fetching students:", err);
+      setStudents([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function deleteStudent(id_number: string) {
-    if (!confirm(`Are you sure you want to delete student ${id_number}?`)) return
+    if (!confirm(`Are you sure you want to delete student ${id_number}?`))
+      return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/students/${id_number}`, {
-        method: "DELETE",
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students/${id_number}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
       if (res.ok) {
-        fetchStudents()
+        fetchStudents();
       } else {
-        const error = await res.json()
-        alert(error.error || "Failed to delete student")
+        const error = await res.json();
+        alert(error.error || "Failed to delete student");
       }
     } catch (err) {
-      console.error("Error deleting student:", err)
+      console.error("Error deleting student:", err);
     }
   }
 
   useEffect(() => {
-    fetchStudents()
-  }, [])
+    fetchStudents();
+  }, []);
   useEffect(() => {
-    setCurrentPage(1)
-  }, [search, sortBy, order])
+    setCurrentPage(1);
+  }, [search, sortBy, order]);
 
   const displayedStudents = students
     .filter((s) => {
-    const query = search.toLowerCase().trim()
+      const query = search.toLowerCase().trim();
 
-    if (!query) return true
+      if (!query) return true;
 
-    const yearLevelMap: Record<string, string> = {
-      "1": "1",
-      "1st": "1",
-      "first": "1",
-      "1st year": "1",
-      "2": "2",
-      "2nd": "2",
-      "second": "2",
-      "2nd year": "2",
-      "3": "3",
-      "3rd": "3",
-      "third": "3",
-      "3rd year": "3",
-      "4": "4",
-      "4th": "4",
-      "fourth": "4",
-      "4th year": "4",
-    }
+      const yearLevelMap: Record<string, string> = {
+        "1": "1",
+        "1st": "1",
+        first: "1",
+        "1st year": "1",
+        "2": "2",
+        "2nd": "2",
+        second: "2",
+        "2nd year": "2",
+        "3": "3",
+        "3rd": "3",
+        third: "3",
+        "3rd year": "3",
+        "4": "4",
+        "4th": "4",
+        fourth: "4",
+        "4th year": "4",
+      };
 
-    // Gender must match exactly
-    const genderMatch =
-      ["male", "female", "others"].includes(query) &&
-      s.gender.toLowerCase() === query
-    
-    const mappedYear = yearLevelMap[query]
-    const yearLevelMatch = mappedYear && s.year_level.toString() === mappedYear
+      // Gender must match exactly
+      const genderMatch =
+        ["male", "female", "others"].includes(query) &&
+        s.gender.toLowerCase() === query;
 
-    // Search by name, ID, program, year level, and college
-    const generalMatch = `${s.first_name} ${s.last_name} ${s.id_number} ${s.program_code} ${s.program_name || ""} ${s.college_name || ""}`
-      .toLowerCase()
-      .includes(query)
+      const mappedYear = yearLevelMap[query];
+      const yearLevelMatch =
+        mappedYear && s.year_level.toString() === mappedYear;
 
-    return genderMatch || generalMatch || yearLevelMatch
+      // Search by name, ID, program, year level, and college
+      const generalMatch = `${s.first_name} ${s.last_name} ${s.id_number} ${
+        s.program_code
+      } ${s.program_name || ""} ${s.college_name || ""}`
+        .toLowerCase()
+        .includes(query);
+
+      return genderMatch || generalMatch || yearLevelMatch;
     })
     .sort((a, b) => {
-      if (sortBy === "Sort By") return 0
-      const fieldKey = sortBy.toLowerCase().replace(" ", "_")
-      const fieldA = (a as any)[fieldKey]
-      const fieldB = (b as any)[fieldKey]
-      if (!fieldA || !fieldB) return 0
-      if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
-      return String(fieldB).localeCompare(String(fieldA))
-    })
+      if (sortBy === "Sort By") return 0;
+      const fieldKey = sortBy.toLowerCase().replace(" ", "_");
+      const fieldA = (a as any)[fieldKey];
+      const fieldB = (b as any)[fieldKey];
+      if (!fieldA || !fieldB) return 0;
+      if (order === "Ascending")
+        return String(fieldA).localeCompare(String(fieldB));
+      return String(fieldB).localeCompare(String(fieldA));
+    });
 
-  const totalPages = Math.ceil(displayedStudents.length / studentsPerPage)
+  const totalPages = Math.ceil(displayedStudents.length / studentsPerPage);
   const paginatedStudents = displayedStudents.slice(
     (currentPage - 1) * studentsPerPage,
     currentPage * studentsPerPage
-  )
-
-
+  );
 
   return (
     <div className="h-screen flex flex-col">
@@ -171,11 +185,16 @@ export default function StudentsPage() {
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {["ID Number", "First Name", "Last Name", "Year Level"].map((option) => (
-                  <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
-                    {option}
-                  </DropdownMenuItem>
-                ))}
+                {["ID Number", "First Name", "Last Name", "Year Level"].map(
+                  (option) => (
+                    <DropdownMenuItem
+                      key={option}
+                      onClick={() => setSortBy(option)}
+                    >
+                      {option}
+                    </DropdownMenuItem>
+                  )
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -186,7 +205,10 @@ export default function StudentsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {["Ascending", "Descending"].map((option) => (
-                  <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setOrder(option)}
+                  >
                     {option}
                   </DropdownMenuItem>
                 ))}
@@ -197,7 +219,15 @@ export default function StudentsPage() {
           <Table className="w-full table-auto border-collapse">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                {["ID No.", "First Name", "Last Name", "Gender", "Year Level", "Program", "Actions"].map((header) => (
+                {[
+                  "ID No.",
+                  "First Name",
+                  "Last Name",
+                  "Gender",
+                  "Year Level",
+                  "Program",
+                  "Actions",
+                ].map((header) => (
                   <TableHead key={header} className="!text-slate-50">
                     {header}
                   </TableHead>
@@ -207,13 +237,26 @@ export default function StudentsPage() {
 
             <TableBody>
               {paginatedStudents.map((s, i) => (
-                <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
-                  <TableCell className="text-slate-200">{s.id_number}</TableCell>
-                  <TableCell className="text-slate-200">{s.first_name}</TableCell>
-                  <TableCell className="text-slate-200">{s.last_name}</TableCell>
+                <TableRow
+                  key={i}
+                  className="border-0 group hover:bg-zinc-700/70"
+                >
+                  <TableCell className="text-slate-200">
+                    {s.id_number}
+                  </TableCell>
+                  <TableCell className="text-slate-200">
+                    {s.first_name}
+                  </TableCell>
+                  <TableCell className="text-slate-200">
+                    {s.last_name}
+                  </TableCell>
                   <TableCell className="text-slate-200">{s.gender}</TableCell>
-                  <TableCell className="text-slate-200">{s.year_level}</TableCell>
-                  <TableCell className="text-slate-200">{s.program_code}</TableCell>
+                  <TableCell className="text-slate-200">
+                    {s.year_level}
+                  </TableCell>
+                  <TableCell className="text-slate-200">
+                    {s.program_code}
+                  </TableCell>
 
                   {/* Actions */}
                   <TableCell className="flex gap-2 hover:bg-transparent">
@@ -221,8 +264,8 @@ export default function StudentsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        setEditingStudent(s)
-                        setOpen(true)
+                        setEditingStudent(s);
+                        setOpen(true);
                       }}
                       className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
                     >
@@ -252,9 +295,9 @@ export default function StudentsPage() {
           onOpenChange={setOpen}
           editingStudent={editingStudent}
           onStudentUpdated={() => {
-            fetchStudents()
-            setEditingStudent(null)
-            setOpen(false)
+            fetchStudents();
+            setEditingStudent(null);
+            setOpen(false);
           }}
         />
       )}
@@ -266,21 +309,24 @@ export default function StudentsPage() {
             <PaginationPrevious
               href="#"
               onClick={(e) => {
-                e.preventDefault()
-                if (currentPage > 1) setCurrentPage(currentPage - 1)
+                e.preventDefault();
+                if (currentPage > 1) setCurrentPage(currentPage - 1);
               }}
             />
           </PaginationItem>
 
           {(() => {
-            const pageNumbers = []
-            const maxVisible = 4 // number of visible page buttons
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2))
-            let endPage = startPage + maxVisible - 1
+            const pageNumbers = [];
+            const maxVisible = 4; // number of visible page buttons
+            let startPage = Math.max(
+              1,
+              currentPage - Math.floor(maxVisible / 2)
+            );
+            let endPage = startPage + maxVisible - 1;
 
             if (endPage > totalPages) {
-              endPage = totalPages
-              startPage = Math.max(1, endPage - maxVisible + 1)
+              endPage = totalPages;
+              startPage = Math.max(1, endPage - maxVisible + 1);
             }
 
             if (startPage > 1) {
@@ -290,21 +336,21 @@ export default function StudentsPage() {
                     href="#"
                     isActive={currentPage === 1}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(1)
+                      e.preventDefault();
+                      setCurrentPage(1);
                     }}
                   >
                     1
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
 
               if (startPage > 2) {
                 pageNumbers.push(
                   <PaginationItem key="start-ellipsis">
                     <PaginationEllipsis />
                   </PaginationItem>
-                )
+                );
               }
             }
 
@@ -316,8 +362,8 @@ export default function StudentsPage() {
                     href="#"
                     isActive={currentPage === i}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(i)
+                      e.preventDefault();
+                      setCurrentPage(i);
                     }}
                     className={`${
                       currentPage === i
@@ -328,7 +374,7 @@ export default function StudentsPage() {
                     {i}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
             }
 
             if (endPage < totalPages) {
@@ -337,7 +383,7 @@ export default function StudentsPage() {
                   <PaginationItem key="end-ellipsis">
                     <PaginationEllipsis />
                   </PaginationItem>
-                )
+                );
               }
 
               pageNumbers.push(
@@ -346,30 +392,30 @@ export default function StudentsPage() {
                     href="#"
                     isActive={currentPage === totalPages}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(totalPages)
+                      e.preventDefault();
+                      setCurrentPage(totalPages);
                     }}
                   >
                     {totalPages}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
             }
 
-            return pageNumbers
+            return pageNumbers;
           })()}
 
           <PaginationItem>
             <PaginationNext
               href="#"
               onClick={(e) => {
-                e.preventDefault()
-                if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                e.preventDefault();
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
               }}
             />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
     </div>
-  )
+  );
 }

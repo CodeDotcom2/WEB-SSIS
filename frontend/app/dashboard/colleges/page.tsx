@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Search, Trash2, Pencil } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Search, Trash2, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Pagination,
   PaginationContent,
@@ -26,82 +26,88 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
-import AddCollegeDialog from "@/components/AddCollege"
+} from "@/components/ui/pagination";
+import AddCollegeDialog from "@/components/AddCollege";
 
 export default function CollegesPage() {
-  const [colleges, setColleges] = useState<any[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [collegesPerPage, setCollegesPerPage] = useState(12)
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [editingCollege, setEditingCollege] = useState<any | null>(null)
-  const [open, setOpen] = useState(false)
-  const [sortBy, setSortBy] = useState("Sort By")
-  const [order, setOrder] = useState("Ascending")
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [collegesPerPage, setCollegesPerPage] = useState(12);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [editingCollege, setEditingCollege] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
+  const [sortBy, setSortBy] = useState("Sort By");
+  const [order, setOrder] = useState("Ascending");
 
   async function fetchColleges() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges`)
-      const data = await res.json()
-      setColleges(data.colleges)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+      );
+      const data = await res.json();
+      setColleges(data.colleges);
     } catch (err) {
-      console.error("Error fetching colleges:", err)
+      console.error("Error fetching colleges:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function deleteCollege(id: number, name: string) {
-    if (!confirm(`Are you sure you want to delete college "${name}"?`)) return
+    if (!confirm(`Are you sure you want to delete college "${name}"?`)) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/colleges/${id}`, {
-        method: "DELETE",
-      })
-      const data = await res.json()
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const data = await res.json();
       if (res.ok) {
-        alert(data.message)
-        await fetchColleges()
+        alert(data.message);
+        await fetchColleges();
       } else {
-        alert(data.error || "Failed to delete college")
+        alert(data.error || "Failed to delete college");
       }
     } catch (err) {
-      console.error("Error deleting college:", err)
+      console.error("Error deleting college:", err);
     }
   }
 
   useEffect(() => {
-    fetchColleges()
-  }, [])
+    fetchColleges();
+  }, []);
   useEffect(() => {
-    setCurrentPage(1)
-  }, [search])
+    setCurrentPage(1);
+  }, [search]);
 
   const filteredColleges = colleges
     .filter((c) => {
-      const query = search.toLowerCase().trim()
-      if (!query) return true
+      const query = search.toLowerCase().trim();
+      if (!query) return true;
       return (
         c.college_code.toLowerCase().includes(query) ||
         c.college_name.toLowerCase().includes(query)
-      )
+      );
     })
     .sort((a, b) => {
-      if (sortBy === "Sort By") return 0
-      const fieldKey = sortBy.toLowerCase().replace(" ", "_")
-      const fieldA = (a as any)[fieldKey]
-      const fieldB = (b as any)[fieldKey]
-      if (!fieldA || !fieldB) return 0
-      if (order === "Ascending") return String(fieldA).localeCompare(String(fieldB))
-      return String(fieldB).localeCompare(String(fieldA))
-    })
-  
-  const totalPages = Math.ceil(filteredColleges.length / collegesPerPage)
+      if (sortBy === "Sort By") return 0;
+      const fieldKey = sortBy.toLowerCase().replace(" ", "_");
+      const fieldA = (a as any)[fieldKey];
+      const fieldB = (b as any)[fieldKey];
+      if (!fieldA || !fieldB) return 0;
+      if (order === "Ascending")
+        return String(fieldA).localeCompare(String(fieldB));
+      return String(fieldB).localeCompare(String(fieldA));
+    });
+
+  const totalPages = Math.ceil(filteredColleges.length / collegesPerPage);
   const paginatedColleges = filteredColleges.slice(
     (currentPage - 1) * collegesPerPage,
     currentPage * collegesPerPage
-  )
+  );
 
   return (
     <div className="h-screen flex flex-col">
@@ -130,7 +136,7 @@ export default function CollegesPage() {
           />
           <span>Total Colleges: {colleges.length}</span>
         </div>
-        
+
         {/* Table */}
         <div className="flex-1 glass rounded-lg overflow-auto p-4 shadow-lg">
           <div className="flex gap-2 mb-2">
@@ -141,7 +147,10 @@ export default function CollegesPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {["College Name", "College Code"].map((option) => (
-                  <DropdownMenuItem key={option} onClick={() => setSortBy(option)}>
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setSortBy(option)}
+                  >
                     {option}
                   </DropdownMenuItem>
                 ))}
@@ -155,7 +164,10 @@ export default function CollegesPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {["Ascending", "Descending"].map((option) => (
-                  <DropdownMenuItem key={option} onClick={() => setOrder(option)}>
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setOrder(option)}
+                  >
                     {option}
                   </DropdownMenuItem>
                 ))}
@@ -168,9 +180,15 @@ export default function CollegesPage() {
               <TableRow>
                 <TableHead className="!text-slate-50">College Code</TableHead>
                 <TableHead className="!text-slate-50">College Name</TableHead>
-                <TableHead className="!text-slate-50">Number of Programs</TableHead>
-                <TableHead className="!text-slate-50">Number of Students</TableHead>
-                <TableHead className="!text-slate-50 text-center">Actions</TableHead>
+                <TableHead className="!text-slate-50">
+                  Number of Programs
+                </TableHead>
+                <TableHead className="!text-slate-50">
+                  Number of Students
+                </TableHead>
+                <TableHead className="!text-slate-50 text-center">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,11 +200,22 @@ export default function CollegesPage() {
                 </TableRow>
               ) : paginatedColleges.length > 0 ? (
                 paginatedColleges.map((c, i) => (
-                  <TableRow key={i} className="border-0 group hover:bg-zinc-700/70">
-                    <TableCell className="text-slate-200">{c.college_code}</TableCell>
-                    <TableCell className="text-slate-200">{c.college_name}</TableCell>
-                    <TableCell className="text-slate-200">{c.num_programs}</TableCell>
-                    <TableCell className="text-slate-200">{c.num_students}</TableCell>
+                  <TableRow
+                    key={i}
+                    className="border-0 group hover:bg-zinc-700/70"
+                  >
+                    <TableCell className="text-slate-200">
+                      {c.college_code}
+                    </TableCell>
+                    <TableCell className="text-slate-200">
+                      {c.college_name}
+                    </TableCell>
+                    <TableCell className="text-slate-200">
+                      {c.num_programs}
+                    </TableCell>
+                    <TableCell className="text-slate-200">
+                      {c.num_students}
+                    </TableCell>
                     <TableCell className="flex gap-2 justify-center">
                       {/* Edit Button */}
                       <Button
@@ -194,8 +223,8 @@ export default function CollegesPage() {
                         size="sm"
                         className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
                         onClick={() => {
-                          setEditingCollege(c)
-                          setOpen(true)
+                          setEditingCollege(c);
+                          setOpen(true);
                         }}
                       >
                         <Pencil className="h-4 w-4" />
@@ -231,21 +260,24 @@ export default function CollegesPage() {
             <PaginationPrevious
               href="#"
               onClick={(e) => {
-                e.preventDefault()
-                if (currentPage > 1) setCurrentPage(currentPage - 1)
+                e.preventDefault();
+                if (currentPage > 1) setCurrentPage(currentPage - 1);
               }}
             />
           </PaginationItem>
 
           {(() => {
-            const pageNumbers = []
-            const maxVisible = 4 // number of visible page buttons
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2))
-            let endPage = startPage + maxVisible - 1
+            const pageNumbers = [];
+            const maxVisible = 4; // number of visible page buttons
+            let startPage = Math.max(
+              1,
+              currentPage - Math.floor(maxVisible / 2)
+            );
+            let endPage = startPage + maxVisible - 1;
 
             if (endPage > totalPages) {
-              endPage = totalPages
-              startPage = Math.max(1, endPage - maxVisible + 1)
+              endPage = totalPages;
+              startPage = Math.max(1, endPage - maxVisible + 1);
             }
 
             // Show first page and ellipsis if needed
@@ -256,14 +288,14 @@ export default function CollegesPage() {
                     href="#"
                     isActive={currentPage === 1}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(1)
+                      e.preventDefault();
+                      setCurrentPage(1);
                     }}
                   >
                     1
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
 
               // Only show ellipsis if gap is larger than 1 page
               if (startPage > 2) {
@@ -271,7 +303,7 @@ export default function CollegesPage() {
                   <PaginationItem key="start-ellipsis">
                     <PaginationEllipsis />
                   </PaginationItem>
-                )
+                );
               }
             }
 
@@ -283,8 +315,8 @@ export default function CollegesPage() {
                     href="#"
                     isActive={currentPage === i}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(i)
+                      e.preventDefault();
+                      setCurrentPage(i);
                     }}
                     className={`${
                       currentPage === i
@@ -295,7 +327,7 @@ export default function CollegesPage() {
                     {i}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
             }
 
             // Show ellipsis and last page if needed
@@ -306,7 +338,7 @@ export default function CollegesPage() {
                   <PaginationItem key="end-ellipsis">
                     <PaginationEllipsis />
                   </PaginationItem>
-                )
+                );
               }
 
               pageNumbers.push(
@@ -315,25 +347,25 @@ export default function CollegesPage() {
                     href="#"
                     isActive={currentPage === totalPages}
                     onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(totalPages)
+                      e.preventDefault();
+                      setCurrentPage(totalPages);
                     }}
                   >
                     {totalPages}
                   </PaginationLink>
                 </PaginationItem>
-              )
+              );
             }
 
-            return pageNumbers
+            return pageNumbers;
           })()}
 
           <PaginationItem>
             <PaginationNext
               href="#"
               onClick={(e) => {
-                e.preventDefault()
-                if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                e.preventDefault();
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
               }}
             />
           </PaginationItem>
@@ -347,12 +379,12 @@ export default function CollegesPage() {
           onCollegeUpdated={fetchColleges}
           open={open}
           onOpenChange={(o) => {
-            if (!o) setEditingCollege(null)
-            setOpen(o)
+            if (!o) setEditingCollege(null);
+            setOpen(o);
           }}
-          triggerButton={false} 
+          triggerButton={false}
         />
       )}
     </div>
-  )
+  );
 }

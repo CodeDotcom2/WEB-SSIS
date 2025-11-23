@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-student_bp = Blueprint("student", __name__, url_prefix="/dashboard")
+student_bp = Blueprint("student", __name__, url_prefix="/api/dashboard")
 
 from . import controller
