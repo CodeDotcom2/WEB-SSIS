@@ -322,15 +322,15 @@ class Student:
             print(f"Error deleting student: {e}")
             return False
         
-    @classmethod
-    def update_by_id_number(cls, id_number, last_name, first_name, gender, year_level, college_id, program_id, photo_url):
+    @staticmethod
+    def update_by_id_number(id_number, last_name, first_name, gender, year_level, college_id, program_id, photo_url):
         try:
             db = get_db()
             cursor = db.cursor()
             sql = """
                 UPDATE students
                 SET last_name = %s, first_name = %s, gender = %s, year_level = %s,
-                    college_id = %s, program_id = %s
+                    college_id = %s, program_id = %s, photo_url = %s
                 WHERE id_number = %s
             """
             cursor.execute(sql, (last_name, first_name, gender, year_level, college_id, program_id, photo_url, id_number))
