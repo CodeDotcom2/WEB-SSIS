@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { UserRoundPlus } from "lucide-react";
+import { UserRoundPlus, Camera, Pencil } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ export default function AddStudentDialog({
   triggerButton = true,
   open,
   onOpenChange,
+  viewOnly = false,
 }: {
   onStudentAdded?: () => void;
   onStudentUpdated?: () => void;
@@ -26,10 +28,18 @@ export default function AddStudentDialog({
   triggerButton?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  viewOnly?: boolean;
 }) {
   const [colleges, setColleges] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [filteredPrograms, setFilteredPrograms] = useState<any[]>([]);
+
+  const [isViewMode, setIsViewMode] = useState(viewOnly);
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     last_name: "",
     first_name: "",
@@ -38,8 +48,13 @@ export default function AddStudentDialog({
     year_level: "",
     college_id: "",
     program_id: "",
+    photo_url: "",
   });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    setIsViewMode(viewOnly);
+  }, [viewOnly, open]);
 
   // populate when editing
   useEffect(() => {
@@ -52,7 +67,14 @@ export default function AddStudentDialog({
         year_level: editingStudent.year_level || "",
         college_id: editingStudent.college_id || "",
         program_id: editingStudent.program_id || "",
+        photo_url: editingStudent.photo_url || "",
       });
+
+      if (editingStudent.photo_url) {
+        setImagePreview(editingStudent.photo_url);
+      } else {
+        setImagePreview(null);
+      }
       setIsInitialLoad(true);
     } else {
       setFormData({
@@ -63,12 +85,14 @@ export default function AddStudentDialog({
         year_level: "",
         college_id: "",
         program_id: "",
+        photo_url: "",
       });
+      setImagePreview(null);
+      setSelectedFile(null);
       setIsInitialLoad(true);
     }
-  }, [editingStudent]);
+  }, [editingStudent, open]);
 
-  // fetch dropdown data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -106,7 +130,6 @@ export default function AddStudentDialog({
     if (isInitialLoad) {
       setIsInitialLoad(false);
     } else {
-      // Only clear if the user *manually* changes the college
       setFormData((prev) => ({
         ...prev,
         program_id: filtered.find(
@@ -124,14 +147,35 @@ export default function AddStudentDialog({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isViewMode) return;
 
     const nameRegex = /^[A-Za-z\s]+$/;
     const idRegex = /^\d{4}-\d{4}$/;
 
-    for (const [key, value] of Object.entries(formData)) {
-      if (!value) {
+    const requiredFields = [
+      "last_name",
+      "first_name",
+      "id_number",
+      "gender",
+      "year_level",
+      "college_id",
+      "program_id",
+    ];
+
+    for (const field of requiredFields) {
+      if (!(formData as any)[field]) {
         alert("All fields are required.");
         return;
       }
@@ -152,6 +196,35 @@ export default function AddStudentDialog({
       return;
     }
 
+    let finalPhotoUrl = formData.photo_url;
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        const fileExt = selectedFile.name.split(".").pop();
+        const fileName = `${formData.id_number}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("student-avatars")
+          .upload(filePath, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("student-avatars").getPublicUrl(filePath);
+
+        finalPhotoUrl = publicUrl;
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert("Failed to upload image. Please try again.");
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     try {
       const url = editingStudent
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students/${editingStudent.id_number}`
@@ -159,10 +232,15 @@ export default function AddStudentDialog({
 
       const method = editingStudent ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        photo_url: finalPhotoUrl,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -174,7 +252,6 @@ export default function AddStudentDialog({
 
       alert(data.message || "Student added successfully!");
 
-      // Reset form after adding
       if (!editingStudent) {
         setFormData({
           last_name: "",
@@ -184,7 +261,10 @@ export default function AddStudentDialog({
           year_level: "",
           college_id: "",
           program_id: "",
+          photo_url: "",
         });
+        setImagePreview(null);
+        setSelectedFile(null);
         onStudentAdded && onStudentAdded();
       } else {
         onStudentUpdated && onStudentUpdated();
@@ -198,6 +278,12 @@ export default function AddStudentDialog({
     }
   };
 
+  const getDialogTitle = () => {
+    if (isViewMode) return "Student Details";
+    if (editingStudent) return "Edit Student";
+    return "Add Student";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerButton && (
@@ -209,19 +295,70 @@ export default function AddStudentDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="glass2 sm:max-w-fit">
+      <DialogContent className="glass2 sm:max-w-fit [&>button]:text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">
-            {editingStudent ? "Edit Student" : "Add Student"}
-          </DialogTitle>
+          <DialogTitle className="text-white">{getDialogTitle()}</DialogTitle>
           <DialogDescription>
-            {editingStudent
+            {isViewMode
+              ? "Viewing student details. Click Edit to make changes."
+              : editingStudent
               ? "Update the details below to edit the student."
               : "Fill in the details below to add a new student."}
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex flex-col items-center justify-center -mt-2 mb-4">
+          <label
+            className={`relative group flex flex-col items-center justify-center w-28 h-28 rounded-full border-2 border-dashed 
+            ${
+              isViewMode
+                ? "border-gray-600 cursor-default"
+                : "border-gray-400 hover:border-white cursor-pointer hover:bg-white/10"
+            } 
+            bg-white/5 transition-all overflow-hidden`}
+          >
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Profile Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-gray-400 group-hover:text-white">
+                <Camera className="w-8 h-8" />
+                <span className="text-[10px] font-medium uppercase tracking-wide">
+                  Photo
+                </span>
+              </div>
+            )}
+
+            {!isViewMode && imagePreview && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+              disabled={isViewMode}
+            />
+          </label>
+        </div>
+
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+          <input
+            name="id_number"
+            value={formData.id_number}
+            onChange={handleChange}
+            type="text"
+            placeholder="ID Number"
+            required
+            disabled={isViewMode || !!editingStudent}
+            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white disabled:opacity-70 disabled:cursor-not-allowed"
+          />
           <div className="flex gap-2">
             <input
               name="last_name"
@@ -230,7 +367,8 @@ export default function AddStudentDialog({
               type="text"
               placeholder="Last Name"
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white disabled:opacity-70 disabled:cursor-not-allowed"
             />
             <input
               name="first_name"
@@ -239,20 +377,10 @@ export default function AddStudentDialog({
               type="text"
               placeholder="First Name"
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 bg-transparent text-white disabled:opacity-70 disabled:cursor-not-allowed"
             />
           </div>
-
-          <input
-            name="id_number"
-            value={formData.id_number}
-            onChange={handleChange}
-            type="text"
-            placeholder="ID Number"
-            required
-            disabled={!!editingStudent}
-            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
-          />
 
           <div className="flex gap-2">
             <select
@@ -260,7 +388,8 @@ export default function AddStudentDialog({
               value={formData.gender}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option value="" disabled hidden>
                 Select Gender
@@ -278,7 +407,8 @@ export default function AddStudentDialog({
               value={formData.year_level}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option value="" disabled hidden>
                 Select Year Level
@@ -311,7 +441,8 @@ export default function AddStudentDialog({
                 });
               }}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option
                 className="bg-gray-900 text-white"
@@ -337,7 +468,8 @@ export default function AddStudentDialog({
               value={formData.program_id}
               onChange={handleChange}
               required
-              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white"
+              disabled={isViewMode}
+              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option
                 value=""
@@ -359,9 +491,30 @@ export default function AddStudentDialog({
             </select>
           </div>
 
-          <Button variant="blue" type="submit" className="self-end">
-            {editingStudent ? "Update" : "Save"}
-          </Button>
+          <div className="self-end">
+            {isViewMode ? (
+              <Button
+                type="button"
+                variant="blue"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsViewMode(false);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit
+              </Button>
+            ) : (
+              <Button variant="blue" type="submit" disabled={isUploading}>
+                {isUploading
+                  ? "Uploading..."
+                  : editingStudent
+                  ? "Update"
+                  : "Save"}
+              </Button>
+            )}
+          </div>
         </form>
       </DialogContent>
     </Dialog>

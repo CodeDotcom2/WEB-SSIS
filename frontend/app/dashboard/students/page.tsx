@@ -37,11 +37,10 @@ export default function StudentsPage() {
   const [order, setOrder] = useState("Ascending");
   const [search, setSearch] = useState("");
 
-  // editing dialog
+  // Dialog State
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
+  const [viewMode, setViewMode] = useState(false); // NEW: identifies VIEW or EDIT mode
   const [open, setOpen] = useState(false);
-
-  console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
 
   async function fetchStudents() {
     setLoading(true);
@@ -87,6 +86,7 @@ export default function StudentsPage() {
   useEffect(() => {
     fetchStudents();
   }, []);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [search, sortBy, order]);
@@ -94,7 +94,6 @@ export default function StudentsPage() {
   const displayedStudents = students
     .filter((s) => {
       const query = search.toLowerCase().trim();
-
       if (!query) return true;
 
       const yearLevelMap: Record<string, string> = {
@@ -116,7 +115,6 @@ export default function StudentsPage() {
         "4th year": "4",
       };
 
-      // Gender must match exactly
       const genderMatch =
         ["male", "female", "others"].includes(query) &&
         s.gender.toLowerCase() === query;
@@ -125,7 +123,6 @@ export default function StudentsPage() {
       const yearLevelMatch =
         mappedYear && s.year_level.toString() === mappedYear;
 
-      // Search by name, ID, program, year level, and college
       const generalMatch = `${s.first_name} ${s.last_name} ${s.id_number} ${
         s.program_code
       } ${s.program_name || ""} ${s.college_name || ""}`
@@ -239,7 +236,12 @@ export default function StudentsPage() {
               {paginatedStudents.map((s, i) => (
                 <TableRow
                   key={i}
-                  className="border-0 group hover:bg-zinc-700/70"
+                  className="border-0 group hover:bg-zinc-700/70 cursor-pointer"
+                  onClick={() => {
+                    setEditingStudent(s);
+                    setViewMode(true); // VIEW MODE
+                    setOpen(true);
+                  }}
                 >
                   <TableCell className="text-slate-200">
                     {s.id_number}
@@ -258,19 +260,26 @@ export default function StudentsPage() {
                     {s.program_code}
                   </TableCell>
 
-                  {/* Actions */}
-                  <TableCell className="flex gap-2 hover:bg-transparent">
+                  {/* Actions – prevent row click */}
+                  <TableCell
+                    className="flex gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Edit */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
                         setEditingStudent(s);
+                        setViewMode(false);
                         setOpen(true);
                       }}
                       className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
+
+                    {/* Delete */}
                     <Button
                       variant="deleteEffect"
                       size="sm"
@@ -287,13 +296,14 @@ export default function StudentsPage() {
         </div>
       </main>
 
-      {/* Edit dialog */}
+      {/* DIALOG */}
       {editingStudent && (
         <AddStudentDialog
           triggerButton={false}
           open={open}
           onOpenChange={setOpen}
           editingStudent={editingStudent}
+          viewOnly={viewMode} // NEW
           onStudentUpdated={() => {
             fetchStudents();
             setEditingStudent(null);
@@ -315,9 +325,10 @@ export default function StudentsPage() {
             />
           </PaginationItem>
 
+          {/* Page Buttons */}
           {(() => {
             const pageNumbers = [];
-            const maxVisible = 4; // number of visible page buttons
+            const maxVisible = 4;
             let startPage = Math.max(
               1,
               currentPage - Math.floor(maxVisible / 2)
@@ -354,7 +365,6 @@ export default function StudentsPage() {
               }
             }
 
-            // Visible range of pages
             for (let i = startPage; i <= endPage; i++) {
               pageNumbers.push(
                 <PaginationItem key={i}>

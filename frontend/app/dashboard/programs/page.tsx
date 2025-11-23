@@ -45,7 +45,10 @@ export default function ProgramsPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`,
+        {
+          credentials: "include",
+        }
       );
       const data = await res.json();
       setPrograms(data.programs || []);
@@ -64,6 +67,7 @@ export default function ProgramsPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
       const data = await res.json();

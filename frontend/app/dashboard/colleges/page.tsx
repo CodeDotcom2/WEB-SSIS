@@ -44,7 +44,10 @@ export default function CollegesPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`,
+        {
+          credentials: "include",
+        }
       );
       const data = await res.json();
       setColleges(data.colleges);
@@ -62,6 +65,7 @@ export default function CollegesPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
       const data = await res.json();
