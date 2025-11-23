@@ -52,6 +52,7 @@ def add_student():
         year_level=data.get("year_level"),
         college_id=data.get("college_id"),
         program_id=data.get("program_id"),
+        photo_url=data.get("photo_url")
     )
     student.add()
     print("✅ Student added route reached")
@@ -65,7 +66,8 @@ def add_student():
             "gender": student.gender,
             "year_level": student.year_level,
             "college_id": student.college_id,
-            "program_id": student.program_id
+            "program_id": student.program_id,
+            "photo_url" : student.photo_url
         }}), 201
 
 @student_bp.route("/students/<string:id_number>", methods=["DELETE"])
@@ -89,6 +91,7 @@ def update_student(id_number):
         year_level=data.get("year_level"),
         college_id=data.get("college_id"),
         program_id=data.get("program_id"),
+        photo_url=data.get("photo_url")
     )
     if success:
         return jsonify({"message": f"Student {id_number} updated successfully"}), 200

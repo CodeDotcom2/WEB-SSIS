@@ -281,7 +281,7 @@ class Program:
 
 
 class Student:
-    def __init__(self, student_id=None, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None, program_code=None, program_name=None):
+    def __init__(self, student_id=None, id_number=None, last_name=None, first_name=None, gender=None, year_level=None, college_id=None, program_id=None, program_code=None, program_name=None, photo_url=None):
         self.student_id = student_id
         self.id_number = id_number
         self.last_name = last_name
@@ -292,13 +292,14 @@ class Student:
         self.program_id = program_id
         self.program_name = program_name
         self.program_code = program_code
+        self.photo_url = photo_url
 
     def add(self):
         db = get_db()
         cursor = db.cursor()
-        sql = """INSERT INTO students (id_number, last_name, first_name, gender, year_level, college_id, program_id)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-        cursor.execute(sql, (self.id_number, self.last_name, self.first_name, self.gender, self.year_level, self.college_id, self.program_id))
+        sql = """INSERT INTO students (id_number, last_name, first_name, gender, year_level, college_id, program_id, photo_url)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+        cursor.execute(sql, (self.id_number, self.last_name, self.first_name, self.gender, self.year_level, self.college_id, self.program_id, self.photo_url))
         db.commit()
         cursor.close()
 
@@ -322,7 +323,7 @@ class Student:
             return False
         
     @classmethod
-    def update_by_id_number(cls, id_number, last_name, first_name, gender, year_level, college_id, program_id):
+    def update_by_id_number(cls, id_number, last_name, first_name, gender, year_level, college_id, program_id, photo_url):
         try:
             db = get_db()
             cursor = db.cursor()
@@ -332,7 +333,7 @@ class Student:
                     college_id = %s, program_id = %s
                 WHERE id_number = %s
             """
-            cursor.execute(sql, (last_name, first_name, gender, year_level, college_id, program_id, id_number))
+            cursor.execute(sql, (last_name, first_name, gender, year_level, college_id, program_id, photo_url, id_number))
             db.commit()
             cursor.close()
             return cursor.rowcount > 0
@@ -348,7 +349,8 @@ class Student:
         SELECT s.student_id, s.id_number, s.last_name, s.first_name, s.gender, s.year_level,
             s.college_id, s.program_id,
             COALESCE(p.program_code, 'N/A') AS program_code,
-            COALESCE(p.program_name, 'N/A') AS program_name
+            COALESCE(p.program_name, 'N/A') AS program_name,
+            s.photo_url
         FROM students s
         LEFT JOIN programs p ON s.program_id = p.id
         LEFT JOIN colleges c ON s.college_id = c.id
@@ -367,7 +369,8 @@ class Student:
                 college_id=row[6],
                 program_id=row[7],
                 program_code=row[8],
-                program_name=row[9]
+                program_name=row[9],
+                photo_url=row[10]
             )
             for row in result
         ]

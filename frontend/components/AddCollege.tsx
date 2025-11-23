@@ -114,7 +114,7 @@ export default function AddCollegeDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="glass2 sm:max-w-[425px]">
+      <DialogContent className="glass2 sm:max-w-[425px] [&>button]:text-white">
         <DialogHeader>
           <DialogTitle className="text-white">
             {editingCollege ? "Edit College" : "Add College"}
