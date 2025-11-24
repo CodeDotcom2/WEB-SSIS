@@ -1,10 +1,9 @@
 from app.database import get_db
 from flask_login import UserMixin
-import hashlib
+import bcrypt
 
 
 class Users(UserMixin):
-    USE_HASH = False  
 
     def __init__(self, id=None, username=None, password=None, email=None):
         self.id = id
@@ -16,8 +15,7 @@ class Users(UserMixin):
         db = get_db()
         cursor = db.cursor()
 
-        # decide password storage based on USE_HASH
-        password_to_store = hashlib.md5(self.password.encode()).hexdigest() if self.USE_HASH else self.password
+        password_to_store = bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         sql = "INSERT INTO users(username, user_password, email) VALUES (%s, %s, %s)"
         cursor.execute(sql, (self.username, password_to_store, self.email))
@@ -55,7 +53,7 @@ class Users(UserMixin):
             cursor = db.cursor()
 
             if password:
-                password_to_store = hashlib.md5(password.encode()).hexdigest() if cls.USE_HASH else password
+                password_to_store = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 sql = "UPDATE users SET username = %s, email = %s, user_password = %s WHERE id = %s"
                 cursor.execute(sql, (username, email, password_to_store, user_id))
             else:
@@ -97,8 +95,14 @@ class Users(UserMixin):
         return None
 
     def check_password(self, password):
-        password_to_check = hashlib.md5(password.encode()).hexdigest() if self.USE_HASH else password
-        return self.password == password_to_check
+        if not self.password:
+            return False
+
+        try:
+            return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
+        except ValueError:
+            print("Error: Stored password is not a valid bcrypt hash.")
+            return False
 
 
     def get_id(self):
