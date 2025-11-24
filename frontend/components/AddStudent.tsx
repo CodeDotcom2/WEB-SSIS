@@ -141,7 +141,6 @@ export default function AddStudentDialog({
     }
   }, [token, open]);
 
-  // filter programs by college
   useEffect(() => {
     if (!programs.length) return;
 
@@ -153,7 +152,6 @@ export default function AddStudentDialog({
 
     setFilteredPrograms(filtered);
 
-    // Don’t clear program_id during edit load
     if (isInitialLoad) {
       setIsInitialLoad(false);
     } else {

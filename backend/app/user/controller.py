@@ -16,7 +16,7 @@ def login():
     if user and user.check_password(password): 
         long_expiry = datetime.timedelta(minutes=5)
         access_token = create_access_token(
-            identity=user.id, 
+            identity=str(user.id), 
             expires_delta=long_expiry
         )
         return jsonify(message="Login successful",access_token=access_token), 200
@@ -36,7 +36,10 @@ def logout():
 @user_bp.route("/me", methods=["GET"])
 @jwt_required()
 def get_current_user():
-    user_id = get_jwt_identity() 
+    try:
+        user_id = int(get_jwt_identity())
+    except Exception:
+        user_id = get_jwt_identity()
     user = models.Users.get_by_id(user_id) 
 
     if user:

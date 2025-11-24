@@ -142,7 +142,7 @@ export default function AddProgramDialog({
         onProgramAdded && onProgramAdded();
       }
 
-      onOpenChange?.(false); // close after success
+      onOpenChange?.(false);
     } catch (err) {
       console.error("❌ Submit error:", err);
       alert(
