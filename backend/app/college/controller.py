@@ -1,11 +1,12 @@
 from flask import request, jsonify
 from . import college_bp
 from app.models import College, Program, Student
-from app import csrf
+from flask_jwt_extended import jwt_required
 
 
 # GET /dashboard/colleges
 @college_bp.route("/colleges", methods=["GET"], strict_slashes=False)
+@jwt_required()
 def get_colleges():
     colleges = College.all()
     programs = Program.all()
@@ -29,7 +30,7 @@ def get_colleges():
 
 # POST /dashboard/colleges
 @college_bp.route("/colleges", methods=["POST"])
-@csrf.exempt
+@jwt_required()
 def add_college():
     import re
     from app.database import get_db
@@ -73,7 +74,7 @@ def add_college():
 
 # DELETE /dashboard/colleges/<college_id>
 @college_bp.route("/colleges/<int:college_id>", methods=["DELETE"])
-@csrf.exempt
+@jwt_required()
 def delete_college(college_id):
     success, msg = College.delete_college(college_id)
     if success:
@@ -83,7 +84,7 @@ def delete_college(college_id):
 
 # PUT /dashboard/colleges/<college_id>
 @college_bp.route("/colleges/<int:college_id>", methods=["PUT"])
-@csrf.exempt
+@jwt_required()
 def update_college(college_id):
     import re
     from app.database import get_db

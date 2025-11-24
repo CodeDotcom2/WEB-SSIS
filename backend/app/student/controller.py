@@ -1,16 +1,17 @@
 from flask import request, jsonify
 from . import student_bp
-from app import csrf
 import app.models as models
+from flask_jwt_extended import jwt_required
 
 @student_bp.route("/students", methods=["GET"])
+@jwt_required()
 def list_students():
     students = models.Student.all()
     return jsonify([s.__dict__ for s in students])
 
 
 @student_bp.route("/students", methods=["POST"])
-@csrf.exempt
+@jwt_required()
 def add_student():
     data = request.get_json()
     import re
@@ -71,7 +72,7 @@ def add_student():
         }}), 201
 
 @student_bp.route("/students/<string:id_number>", methods=["DELETE"])
-@csrf.exempt
+@jwt_required()
 def delete_student(id_number):
     success = models.Student.delete_by_id_number(id_number)
     if success:
@@ -80,7 +81,7 @@ def delete_student(id_number):
 
 
 @student_bp.route("/students/<string:id_number>", methods=["PUT"])
-@csrf.exempt
+@jwt_required()
 def update_student(id_number):
     data = request.get_json()
     success = models.Student.update_by_id_number(

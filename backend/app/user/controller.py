@@ -1,21 +1,19 @@
 # app/user/controller.py
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 import app.models as models
 from . import user_bp
-from app import csrf
 import datetime
 from .. import BLOCKLIST
 
 @user_bp.route("/login", methods=["POST"])
-@csrf.exempt
 def login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
 
     user = models.Users.get_by_username(username)
-    if user and user.check_password(password):  # assumes you have check_password()
+    if user and user.check_password(password): 
         long_expiry = datetime.timedelta(minutes=5)
         access_token = create_access_token(
             identity=user.id, 

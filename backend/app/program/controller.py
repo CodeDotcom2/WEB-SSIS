@@ -1,11 +1,12 @@
 from flask import jsonify, request
 from . import program_bp
 from app.models import Program, College
-from app import csrf
 import traceback
+from flask_jwt_extended import jwt_required
 
 
 @program_bp.route("/programs", methods=["GET"], strict_slashes=False)
+@jwt_required()
 def get_programs():
     programs = Program.all()
     program_list = [
@@ -22,7 +23,7 @@ def get_programs():
     return jsonify({"programs": program_list}), 200
 
 @program_bp.route("/programs", methods=["POST"])
-@csrf.exempt
+@jwt_required()
 def add_program():
     import re
     from app.database import get_db
@@ -69,7 +70,7 @@ def add_program():
 
 
 @program_bp.route("/programs/<int:program_id>", methods=["DELETE"], strict_slashes=False)
-@csrf.exempt
+@jwt_required()
 def delete_program(program_id):
     try:
         success, message = Program.delete_program(program_id)
@@ -82,7 +83,7 @@ def delete_program(program_id):
         return jsonify({"error": "Failed to delete program"}), 500
 
 @program_bp.route("/programs/<int:program_id>", methods=["PUT"])
-@csrf.exempt
+@jwt_required()
 def update_program(program_id):
     import re
     from app.database import get_db
