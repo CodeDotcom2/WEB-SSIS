@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/contexts/AuthContext";
+
+interface LoginResponse {
+  message: string;
+  access_token: string;
+}
 
 export function useLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { loginUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +36,19 @@ export function useLogin() {
       console.log("Response from backend:", data);
 
       if (res.ok) {
-        alert("✅ " + data.message);
-        router.push("/dashboard/students");
+        const token = data.access_token;
+
+        if (token) {
+          loginUser(token);
+          console.log(
+            "loginUser called, token set. Redirecting to dashboard..."
+          );
+          // Ensure navigation happens even if AuthContext state update is async
+          router.push("/dashboard/students");
+          alert("✅ " + data.message);
+        } else {
+          alert("❌ Login successful but no token received.");
+        }
       } else {
         alert("❌ " + data.message);
       }

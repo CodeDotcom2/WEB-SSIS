@@ -3,32 +3,22 @@
 import { User, University, BookOpen, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { logoutUser } = useAuth();
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-
-      const res = await fetch(`${apiUrl}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        router.push("/auth/login");
-      } else {
-        alert("Failed to logout");
-      }
+      await logoutUser();
     } catch (error) {
-      console.error("Logout error:", error);
-      alert("Error logging out");
+      console.error("Logout initiation error:", error);
+      alert("Error during logout initiation.");
     } finally {
       setLoggingOut(false);
     }

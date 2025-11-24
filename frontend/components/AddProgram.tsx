@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function AddProgramDialog({
   onProgramAdded,
@@ -27,6 +28,7 @@ export default function AddProgramDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const { token } = useAuth();
   const [colleges, setColleges] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     program_name: "",
@@ -35,7 +37,6 @@ export default function AddProgramDialog({
   });
   const [loading, setLoading] = useState(false);
 
-  // populate when editing
   useEffect(() => {
     if (editingProgram) {
       setFormData({
@@ -49,18 +50,37 @@ export default function AddProgramDialog({
   // fetch colleges
   useEffect(() => {
     async function fetchColleges() {
+      if (!token) {
+        console.error("Cannot fetch college list: No token available.");
+        return;
+      }
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`,
+          { headers }
         );
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        setColleges(data.colleges || []);
+        const collegesList = Array.isArray(data.colleges)
+          ? data.colleges
+          : Array.isArray(data)
+          ? data
+          : [];
+        setColleges(collegesList);
       } catch (err) {
         console.error("Error fetching colleges:", err);
       }
     }
-    fetchColleges();
-  }, []);
+    if (token) {
+      fetchColleges();
+    }
+  }, [token]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -78,6 +98,12 @@ export default function AddProgramDialog({
       return;
     setLoading(true);
 
+    if (!token) {
+      alert("Authentication required to save program data.");
+      setLoading(false);
+      return;
+    }
+
     const method = editingProgram ? "PUT" : "POST";
     const url = editingProgram
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs/${editingProgram.id}`
@@ -86,7 +112,10 @@ export default function AddProgramDialog({
     try {
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           ...formData,
           college_id: parseInt(formData.college_id, 10),

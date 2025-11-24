@@ -27,6 +27,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import AddStudentDialog from "@/components/AddStudent";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -36,10 +37,10 @@ export default function StudentsPage() {
   const [sortBy, setSortBy] = useState("Sort By");
   const [order, setOrder] = useState("Ascending");
   const [search, setSearch] = useState("");
+  const { token, logoutUser } = useAuth();
 
-  // Dialog State
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
-  const [viewMode, setViewMode] = useState(false); // NEW: identifies VIEW or EDIT mode
+  const [viewMode, setViewMode] = useState(false);
   const [open, setOpen] = useState(false);
 
   async function fetchStudents() {
@@ -48,9 +49,23 @@ export default function StudentsPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students`,
         {
-          credentials: "include",
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+
+      if (res.status === 401) {
+        console.error("Token expired or invalid. Logging out.");
+        logoutUser();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       setStudents(Array.isArray(data) ? data : data.students || []);
     } catch (err) {
@@ -61,17 +76,35 @@ export default function StudentsPage() {
     }
   }
 
+  useEffect(() => {
+    if (token) {
+      fetchStudents();
+    }
+  }, [token]);
+
   async function deleteStudent(id_number: string) {
     if (!confirm(`Are you sure you want to delete student ${id_number}?`))
       return;
+    if (!token) {
+      alert("Authentication required to delete student data.");
+      return;
+    }
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students/${id_number}`,
         {
           method: "DELETE",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+      if (res.status === 401) {
+        console.error("Token expired or invalid during delete. Logging out.");
+        logoutUser();
+        return;
+      }
+
       if (res.ok) {
         fetchStudents();
       } else {
@@ -82,10 +115,6 @@ export default function StudentsPage() {
       console.error("Error deleting student:", err);
     }
   }
-
-  useEffect(() => {
-    fetchStudents();
-  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -260,7 +289,6 @@ export default function StudentsPage() {
                     {s.program_code}
                   </TableCell>
 
-                  {/* Actions – prevent row click */}
                   <TableCell
                     className="flex gap-2"
                     onClick={(e) => e.stopPropagation()}
@@ -303,7 +331,7 @@ export default function StudentsPage() {
           open={open}
           onOpenChange={setOpen}
           editingStudent={editingStudent}
-          viewOnly={viewMode} // NEW
+          viewOnly={viewMode}
           onStudentUpdated={() => {
             fetchStudents();
             setEditingStudent(null);

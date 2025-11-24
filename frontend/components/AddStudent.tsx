@@ -12,6 +12,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function AddStudentDialog({
   onStudentAdded,
@@ -30,6 +31,8 @@ export default function AddStudentDialog({
   onOpenChange?: (open: boolean) => void;
   viewOnly?: boolean;
 }) {
+  const { token } = useAuth();
+
   const [colleges, setColleges] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [filteredPrograms, setFilteredPrograms] = useState<any[]>([]);
@@ -95,24 +98,48 @@ export default function AddStudentDialog({
 
   useEffect(() => {
     async function fetchData() {
+      if (!token) {
+        console.error("Cannot fetch dropdown data: No token available.");
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
       try {
         const collegeRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges`,
+          { headers }
         );
         const programRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`,
+          { headers }
         );
         const collegeData = await collegeRes.json();
         const programData = await programRes.json();
 
-        setColleges(collegeData.colleges || collegeData);
-        setPrograms(programData.programs || programData);
+        const collegesList = Array.isArray(collegeData.colleges)
+          ? collegeData.colleges
+          : Array.isArray(collegeData)
+          ? collegeData
+          : [];
+
+        const programsList = Array.isArray(programData.programs)
+          ? programData.programs
+          : Array.isArray(programData)
+          ? programData
+          : [];
+
+        setColleges(collegesList);
+        setPrograms(programsList);
       } catch (err) {
         console.error("Error fetching dropdowns:", err);
       }
     }
-    fetchData();
-  }, []);
+    if (open && token) {
+      fetchData();
+    }
+  }, [token, open]);
 
   // filter programs by college
   useEffect(() => {
@@ -160,6 +187,11 @@ export default function AddStudentDialog({
     e.preventDefault();
 
     if (isViewMode) return;
+
+    if (!token) {
+      alert("Authentication required to save student data.");
+      return;
+    }
 
     const nameRegex = /^[A-Za-z\s]+$/;
     const idRegex = /^\d{4}-\d{4}$/;
@@ -239,7 +271,10 @@ export default function AddStudentDialog({
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 

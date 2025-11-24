@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function AddCollegeDialog({
   onCollegeAdded,
@@ -27,13 +28,13 @@ export default function AddCollegeDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
     college_name: "",
     college_code: "",
   });
   const [loading, setLoading] = useState(false);
 
-  // populate when editing
   useEffect(() => {
     if (editingCollege) {
       setFormData({
@@ -54,6 +55,12 @@ export default function AddCollegeDialog({
     if (!formData.college_name || !formData.college_code) return;
     setLoading(true);
 
+    if (!token) {
+      alert("Authentication required to save college data.");
+      setLoading(false);
+      return;
+    }
+
     const method = editingCollege ? "PUT" : "POST";
     const url = editingCollege
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/colleges/${editingCollege.id}`
@@ -62,7 +69,10 @@ export default function AddCollegeDialog({
     try {
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           college_code: formData.college_code,
           college_name: formData.college_name,

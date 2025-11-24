@@ -27,6 +27,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import AddProgramDialog from "@/components/AddProgram";
+// 🔑 IMPORT useAuth
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<any[]>([]);
@@ -36,6 +38,8 @@ export default function ProgramsPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("Sort By");
   const [order, setOrder] = useState("Ascending");
+  // 🔑 GET TOKEN AND LOGOUT FUNCTION
+  const { token, logoutUser } = useAuth();
 
   // editing dialog
   const [editingProgram, setEditingProgram] = useState<any | null>(null);
@@ -43,15 +47,49 @@ export default function ProgramsPage() {
 
   async function fetchPrograms() {
     setLoading(true);
+
+    // 🔑 GUARD
+    if (!token) {
+      setLoading(false);
+      console.error("Token missing for protected route.");
+      return;
+    }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs`,
         {
-          credentials: "include",
+          method: "GET",
+          headers: {
+            // 🔑 ADD TOKEN HEADER
+            Authorization: `Bearer ${token}`,
+          },
+          // ❌ REMOVE credentials: "include",
         }
       );
+
+      // 🔑 HANDLE 401
+      if (res.status === 401) {
+        console.error("Token expired or invalid. Logging out.");
+        logoutUser();
+        return;
+      }
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error("fetchPrograms non-OK response:", res.status, errBody);
+        // If backend returned an object (error), coerce to empty list
+        setPrograms([]);
+        return;
+      }
+
       const data = await res.json();
-      setPrograms(data.programs || []);
+      const programsList = Array.isArray(data.programs)
+        ? data.programs
+        : Array.isArray(data)
+        ? data
+        : [];
+      setPrograms(programsList);
     } catch (err) {
       console.error("Error fetching programs:", err);
       setPrograms([]);
@@ -62,28 +100,52 @@ export default function ProgramsPage() {
 
   async function deleteProgram(id: number, name: string) {
     if (!confirm(`Are you sure you want to delete program "${name}"?`)) return;
+
+    // 🔑 GUARD
+    if (!token) {
+      alert("Authentication required to delete program.");
+      return;
+    }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/programs/${id}`,
         {
           method: "DELETE",
-          credentials: "include",
+          headers: {
+            // 🔑 ADD TOKEN HEADER
+            Authorization: `Bearer ${token}`,
+          },
+          // ❌ REMOVE credentials: "include",
         }
       );
+
+      // 🔑 HANDLE 401
+      if (res.status === 401) {
+        console.error("Token expired or invalid during delete. Logging out.");
+        logoutUser();
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
+        alert(data.message || "Program deleted successfully!");
         await fetchPrograms();
       } else {
         alert(data.error || "Failed to delete program");
       }
     } catch (err) {
       console.error("Error deleting program:", err);
+      alert("Network error during deletion.");
     }
   }
 
+  // 🔑 Only fetch when the token is available
   useEffect(() => {
-    fetchPrograms();
-  }, []);
+    if (token) {
+      fetchPrograms();
+    }
+  }, [token]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -96,7 +158,8 @@ export default function ProgramsPage() {
       return (
         p.program_code.toLowerCase().includes(search.toLowerCase()) ||
         p.program_name.toLowerCase().includes(search.toLowerCase()) ||
-        p.college_name.toLowerCase().includes(search.toLowerCase())
+        (p.college_name &&
+          p.college_name.toLowerCase().includes(search.toLowerCase()))
       );
     })
     .sort((a, b) => {
@@ -268,7 +331,7 @@ export default function ProgramsPage() {
         />
       )}
 
-      {/* Pagination */}
+      {/* Pagination (unchanged) */}
       <Pagination>
         <PaginationContent>
           <PaginationItem>
