@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function AddCollegeDialog({
   onCollegeAdded,
@@ -29,6 +30,7 @@ export default function AddCollegeDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const { token } = useAuth();
+  const { notify } = useNotification();
   const [formData, setFormData] = useState({
     college_name: "",
     college_code: "",
@@ -56,7 +58,9 @@ export default function AddCollegeDialog({
     setLoading(true);
 
     if (!token) {
-      alert("Authentication required to save college data.");
+      notify("Authentication required to save college data.", {
+        type: "error",
+      });
       setLoading(false);
       return;
     }
@@ -90,11 +94,13 @@ export default function AddCollegeDialog({
       console.log("🔍 Response body:", data);
 
       if (!res.ok) {
-        alert(data.error || "Failed to add college.");
+        notify(data.error || "Failed to add college.", { type: "error" });
         return;
       }
 
-      alert(data.message || "College added successfully!");
+      notify(data.message || "College added successfully!", {
+        type: "success",
+      });
 
       if (editingCollege) {
         onCollegeUpdated?.();
@@ -106,8 +112,9 @@ export default function AddCollegeDialog({
       onOpenChange?.(false);
     } catch (err) {
       console.error("❌ Submit error:", err);
-      alert(
-        "Something went wrong. Please check your connection or the console for details."
+      notify(
+        "Something went wrong. Please check your connection or the console for details.",
+        { type: "error" }
       );
     } finally {
       setLoading(false);

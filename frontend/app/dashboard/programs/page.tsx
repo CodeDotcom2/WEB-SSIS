@@ -29,6 +29,7 @@ import {
 import AddProgramDialog from "@/components/AddProgram";
 // 🔑 IMPORT useAuth
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export default function ProgramsPage() {
   const [order, setOrder] = useState("Ascending");
   // 🔑 GET TOKEN AND LOGOUT FUNCTION
   const { token, logoutUser } = useAuth();
+  const { notify, confirm } = useNotification();
 
   // editing dialog
   const [editingProgram, setEditingProgram] = useState<any | null>(null);
@@ -99,11 +101,14 @@ export default function ProgramsPage() {
   }
 
   async function deleteProgram(id: number, name: string) {
-    if (!confirm(`Are you sure you want to delete program "${name}"?`)) return;
+    const ok = await confirm(
+      `Are you sure you want to delete program "${name}"?`
+    );
+    if (!ok) return;
 
     // 🔑 GUARD
     if (!token) {
-      alert("Authentication required to delete program.");
+      notify("Authentication required to delete program.", { type: "error" });
       return;
     }
 
@@ -129,10 +134,12 @@ export default function ProgramsPage() {
 
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "Program deleted successfully!");
+        notify(data.message || "Program deleted successfully!", {
+          type: "success",
+        });
         await fetchPrograms();
       } else {
-        alert(data.error || "Failed to delete program");
+        notify(data.error || "Failed to delete program", { type: "error" });
       }
     } catch (err) {
       console.error("Error deleting program:", err);

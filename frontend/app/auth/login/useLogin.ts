@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 interface LoginResponse {
   message: string;
@@ -15,6 +16,7 @@ export function useLogin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { loginUser } = useAuth();
+  const { notify } = useNotification();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,16 +47,18 @@ export function useLogin() {
           );
           // Ensure navigation happens even if AuthContext state update is async
           router.push("/dashboard/students");
-          alert("✅ " + data.message);
+          notify("✅ " + data.message, { type: "success" });
         } else {
-          alert("❌ Login successful but no token received.");
+          notify("❌ Login successful but no token received.", {
+            type: "error",
+          });
         }
       } else {
-        alert("❌ " + data.message);
+        notify("❌ " + data.message, { type: "error" });
       }
     } catch (err) {
       console.error("Error:", err);
-      alert("⚠️ Could not connect to backend");
+      notify("⚠️ Could not connect to backend", { type: "error" });
     } finally {
       setLoading(false);
     }

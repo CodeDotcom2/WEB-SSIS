@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = useState(false);
   const { logoutUser } = useAuth();
+  const { notify } = useNotification();
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -18,7 +20,7 @@ export default function Sidebar() {
       await logoutUser();
     } catch (error) {
       console.error("Logout initiation error:", error);
-      alert("Error during logout initiation.");
+      notify("Error during logout initiation.", { type: "error" });
     } finally {
       setLoggingOut(false);
     }

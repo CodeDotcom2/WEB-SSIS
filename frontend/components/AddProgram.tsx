@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function AddProgramDialog({
   onProgramAdded,
@@ -29,6 +30,7 @@ export default function AddProgramDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const { token } = useAuth();
+  const { notify } = useNotification();
   const [colleges, setColleges] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     program_name: "",
@@ -99,7 +101,9 @@ export default function AddProgramDialog({
     setLoading(true);
 
     if (!token) {
-      alert("Authentication required to save program data.");
+      notify("Authentication required to save program data.", {
+        type: "error",
+      });
       setLoading(false);
       return;
     }
@@ -129,11 +133,13 @@ export default function AddProgramDialog({
         console.warn("⚠️ Response is not JSON");
       }
       if (!res.ok) {
-        alert(data.error || "Failed to add program.");
+        notify(data.error || "Failed to add program.", { type: "error" });
         return;
       }
 
-      alert(data.message || "Program added successfully!");
+      notify(data.message || "Program added successfully!", {
+        type: "success",
+      });
 
       if (editingProgram) {
         onProgramUpdated && onProgramUpdated();
@@ -145,8 +151,9 @@ export default function AddProgramDialog({
       onOpenChange?.(false);
     } catch (err) {
       console.error("❌ Submit error:", err);
-      alert(
-        "Something went wrong. Please check your connection or the console for details."
+      notify(
+        "Something went wrong. Please check your connection or the console for details.",
+        { type: "error" }
       );
     } finally {
       setLoading(false);

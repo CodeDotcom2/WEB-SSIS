@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function AddStudentDialog({
   onStudentAdded,
@@ -32,6 +33,14 @@ export default function AddStudentDialog({
   viewOnly?: boolean;
 }) {
   const { token } = useAuth();
+  const { notify, confirm } = useNotification();
+
+  const [internalOpen, setInternalOpen] = useState(false);
+  const dialogOpen = typeof open === "boolean" ? open : internalOpen;
+  const handleOpenChange = (v: boolean) => {
+    if (typeof onOpenChange === "function") onOpenChange(v);
+    else setInternalOpen(v);
+  };
 
   const [colleges, setColleges] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
@@ -42,6 +51,44 @@ export default function AddStudentDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  function extractFilePath(url?: string | null) {
+    if (!url) return null;
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split("/");
+      const idx = parts.findIndex((p) => p === "student-avatars");
+      if (idx >= 0) return parts.slice(idx + 1).join("/");
+      return parts.pop() || null;
+    } catch (e) {
+      // fallback: take last segment
+      const segs = url.split("/");
+      return segs.pop() || null;
+    }
+  }
+
+  async function handleDeletePhoto() {
+    const ok = await confirm("Are you sure you want to delete this photo?");
+    if (!ok) return;
+    const filePath = extractFilePath(formData.photo_url);
+    if (!filePath) {
+      notify("Could not determine photo path.", { type: "error" });
+      return;
+    }
+    try {
+      const { error } = await supabase.storage
+        .from("student-avatars")
+        .remove([filePath]);
+      if (error) throw error;
+      notify("Photo deleted.", { type: "success" });
+      setFormData((prev) => ({ ...prev, photo_url: "" }));
+      setImagePreview(null);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error("Error deleting photo:", err);
+      notify("Failed to delete photo.", { type: "error" });
+    }
+  }
 
   const [formData, setFormData] = useState({
     last_name: "",
@@ -136,10 +183,10 @@ export default function AddStudentDialog({
         console.error("Error fetching dropdowns:", err);
       }
     }
-    if (open && token) {
+    if (dialogOpen && token) {
       fetchData();
     }
-  }, [token, open]);
+  }, [token, dialogOpen]);
 
   useEffect(() => {
     if (!programs.length) return;
@@ -187,7 +234,9 @@ export default function AddStudentDialog({
     if (isViewMode) return;
 
     if (!token) {
-      alert("Authentication required to save student data.");
+      notify("Authentication required to save student data.", {
+        type: "error",
+      });
       return;
     }
 
@@ -206,7 +255,7 @@ export default function AddStudentDialog({
 
     for (const field of requiredFields) {
       if (!(formData as any)[field]) {
-        alert("All fields are required.");
+        notify("All fields are required.", { type: "error" });
         return;
       }
     }
@@ -215,14 +264,17 @@ export default function AddStudentDialog({
       !nameRegex.test(formData.first_name) ||
       !nameRegex.test(formData.last_name)
     ) {
-      alert(
-        "Names should only contain letters and spaces (no numbers or symbols)."
+      notify(
+        "Names should only contain letters and spaces (no numbers or symbols).",
+        { type: "error" }
       );
       return;
     }
 
     if (!idRegex.test(formData.id_number)) {
-      alert("ID Number must be in the format XXXX-XXXX (e.g. 2025-0001).");
+      notify("ID Number must be in the format XXXX-XXXX (e.g. 2025-0001).", {
+        type: "error",
+      });
       return;
     }
 
@@ -231,6 +283,7 @@ export default function AddStudentDialog({
     if (selectedFile) {
       setIsUploading(true);
       try {
+        const oldPhotoUrl = formData.photo_url;
         const fileExt = selectedFile.name.split(".").pop();
         const fileName = `${formData.id_number}-${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
@@ -246,9 +299,19 @@ export default function AddStudentDialog({
         } = supabase.storage.from("student-avatars").getPublicUrl(filePath);
 
         finalPhotoUrl = publicUrl;
+
+        // If replacing an existing photo, delete the old file to avoid duplicates
+        try {
+          const oldPath = extractFilePath(oldPhotoUrl);
+          if (oldPath) {
+            await supabase.storage.from("student-avatars").remove([oldPath]);
+          }
+        } catch (e) {
+          console.warn("Failed to delete old photo after replacement:", e);
+        }
       } catch (error) {
         console.error("Error uploading image:", error);
-        alert("Failed to upload image. Please try again.");
+        notify("Failed to upload image. Please try again.", { type: "error" });
         setIsUploading(false);
         return;
       }
@@ -279,11 +342,13 @@ export default function AddStudentDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to add student.");
+        notify(data.error || "Failed to add student.", { type: "error" });
         return;
       }
 
-      alert(data.message || "Student added successfully!");
+      notify(data.message || "Student added successfully!", {
+        type: "success",
+      });
 
       if (!editingStudent) {
         setFormData({
@@ -307,7 +372,9 @@ export default function AddStudentDialog({
       onOpenChange?.(false);
     } catch (err) {
       console.error("Error saving student:", err);
-      alert("Something went wrong while saving the student.");
+      notify("Something went wrong while saving the student.", {
+        type: "error",
+      });
     }
   };
 
@@ -318,7 +385,7 @@ export default function AddStudentDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
           <Button variant="blue" size="lg">
@@ -380,6 +447,14 @@ export default function AddStudentDialog({
             />
           </label>
         </div>
+
+        {imagePreview && !isViewMode && (
+          <div className="flex justify-center mb-4">
+            <Button variant="destructive" size="sm" onClick={handleDeletePhoto}>
+              Delete Photo
+            </Button>
+          </div>
+        )}
 
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           <input

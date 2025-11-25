@@ -29,6 +29,7 @@ import {
 import AddCollegeDialog from "@/components/AddCollege";
 // 🔑 IMPORT useAuth
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
 
 export default function CollegesPage() {
   const [colleges, setColleges] = useState<any[]>([]);
@@ -42,6 +43,7 @@ export default function CollegesPage() {
   const [order, setOrder] = useState("Ascending");
   // 🔑 GET TOKEN AND LOGOUT FUNCTION
   const { token, logoutUser } = useAuth();
+  const { notify, confirm } = useNotification();
 
   async function fetchColleges() {
     setLoading(true);
@@ -96,11 +98,14 @@ export default function CollegesPage() {
   }
 
   async function deleteCollege(id: number, name: string) {
-    if (!confirm(`Are you sure you want to delete college "${name}"?`)) return;
+    const ok = await confirm(
+      `Are you sure you want to delete college "${name}"?`
+    );
+    if (!ok) return;
 
     // 🔑 GUARD
     if (!token) {
-      alert("Authentication required to delete college.");
+      notify("Authentication required to delete college.", { type: "error" });
       return;
     }
 
@@ -126,10 +131,12 @@ export default function CollegesPage() {
 
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "College deleted successfully!");
+        notify(data.message || "College deleted successfully!", {
+          type: "success",
+        });
         await fetchColleges();
       } else {
-        alert(data.error || "Failed to delete college");
+        notify(data.error || "Failed to delete college", { type: "error" });
       }
     } catch (err) {
       console.error("Error deleting college:", err);
