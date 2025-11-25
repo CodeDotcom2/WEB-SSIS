@@ -84,14 +84,15 @@ export function NotificationProvider({
 
       {/* Confirm dialog (Cancel / Confirm) */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
+        <DialogContent className="[&>button]:cursor-pointer">
           <DialogHeader>
             <DialogTitle>{confirmTitle || "Confirm"}</DialogTitle>
             <DialogDescription>{confirmMessage}</DialogDescription>
           </DialogHeader>
           <div className="mt-4 flex justify-end gap-2">
             <Button
-              variant="ghost"
+              className="cursor-pointer"
+              variant="outline"
               onClick={() => {
                 handleConfirm(false);
               }}
@@ -99,6 +100,7 @@ export function NotificationProvider({
               Cancel
             </Button>
             <Button
+              className="cursor-pointer"
               variant="destructive"
               onClick={() => {
                 handleConfirm(true);

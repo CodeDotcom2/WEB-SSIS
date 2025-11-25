@@ -45,7 +45,6 @@ export function useLogin() {
           console.log(
             "loginUser called, token set. Redirecting to dashboard..."
           );
-          // Ensure navigation happens even if AuthContext state update is async
           router.push("/dashboard/students");
           notify("✅ " + data.message, { type: "success" });
         } else {
