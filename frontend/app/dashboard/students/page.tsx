@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/pagination";
 import AddStudentDialog from "@/components/AddStudent";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useNotification } from "@/app/contexts/NotificationContext";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -38,6 +40,7 @@ export default function StudentsPage() {
   const [order, setOrder] = useState("Ascending");
   const [search, setSearch] = useState("");
   const { token, logoutUser } = useAuth();
+  const { notify, confirm } = useNotification();
 
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState(false);
@@ -83,10 +86,14 @@ export default function StudentsPage() {
   }, [token]);
 
   async function deleteStudent(id_number: string) {
-    if (!confirm(`Are you sure you want to delete student ${id_number}?`))
-      return;
+    const ok = await confirm(
+      `Are you sure you want to delete student ${id_number}?`
+    );
+    if (!ok) return;
     if (!token) {
-      alert("Authentication required to delete student data.");
+      notify("Authentication required to delete student data.", {
+        type: "error",
+      });
       return;
     }
     try {
@@ -106,10 +113,41 @@ export default function StudentsPage() {
       }
 
       if (res.ok) {
+        // attempt to delete stored photo if exists
+        try {
+          const student = students.find((s) => s.id_number === id_number);
+          if (student?.photo_url) {
+            // extract file path from URL
+            const extractFilePath = (url?: string | null) => {
+              if (!url) return null;
+              try {
+                const u = new URL(url);
+                const parts = u.pathname.split("/");
+                const idx = parts.findIndex((p) => p === "student-avatars");
+                if (idx >= 0) return parts.slice(idx + 1).join("/");
+                return parts.pop() || null;
+              } catch (e) {
+                const segs = url.split("/");
+                return segs.pop() || null;
+              }
+            };
+
+            const filePath = extractFilePath(student.photo_url);
+            if (filePath) {
+              const { error } = await supabase.storage
+                .from("student-avatars")
+                .remove([filePath]);
+              if (error) console.warn("Failed to remove student photo:", error);
+            }
+          }
+        } catch (err) {
+          console.warn("Error deleting student photo:", err);
+        }
+
         fetchStudents();
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to delete student");
+        notify(error.error || "Failed to delete student", { type: "error" });
       }
     } catch (err) {
       console.error("Error deleting student:", err);
