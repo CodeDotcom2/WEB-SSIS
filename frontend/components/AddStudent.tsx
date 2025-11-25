@@ -15,6 +15,8 @@ import {
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useNotification } from "@/app/contexts/NotificationContext";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export default function AddStudentDialog({
   onStudentAdded,
   onStudentUpdated,
@@ -61,7 +63,6 @@ export default function AddStudentDialog({
       if (idx >= 0) return parts.slice(idx + 1).join("/");
       return parts.pop() || null;
     } catch (e) {
-      // fallback: take last segment
       const segs = url.split("/");
       return segs.pop() || null;
     }
@@ -222,6 +223,24 @@ export default function AddStudentDialog({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+
+      if (!validTypes.includes(file.type)) {
+        notify("Invalid file type. Please upload a JPG, PNG, or WEBP image.", {
+          type: "error",
+        });
+        e.target.value = "";
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        notify("File size too large. Please select an image under 5MB.", {
+          type: "error",
+        });
+        e.target.value = "";
+        return;
+      }
+
       setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setImagePreview(url);
@@ -285,22 +304,48 @@ export default function AddStudentDialog({
       try {
         const oldPhotoUrl = formData.photo_url;
         const fileExt = selectedFile.name.split(".").pop();
-        const fileName = `${formData.id_number}-${Date.now()}.${fileExt}`;
+        const fileName = `${formData.id_number}.${fileExt}`;
         const filePath = `${fileName}`;
+
+        const { data: existingFiles } = await supabase.storage
+          .from("student-avatars")
+          .list("", { search: formData.id_number });
+
+        if (existingFiles && existingFiles.length > 0) {
+          const filesToDelete = existingFiles
+            .filter((f) => f.name.startsWith(`${formData.id_number}.`))
+            .map((f) => f.name);
+
+          if (filesToDelete.length > 0) {
+            await supabase.storage
+              .from("student-avatars")
+              .remove(filesToDelete);
+          }
+        }
 
         const { error: uploadError } = await supabase.storage
           .from("student-avatars")
-          .upload(filePath, selectedFile);
+          .upload(filePath, selectedFile, {
+            upsert: true,
+          });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          if (uploadError.message.includes("maximum allowed size")) {
+            notify("File size too large. Please select an image under 5MB.", {
+              type: "error",
+            });
+            setIsUploading(false);
+            return;
+          }
+          throw uploadError;
+        }
 
         const {
           data: { publicUrl },
         } = supabase.storage.from("student-avatars").getPublicUrl(filePath);
 
-        finalPhotoUrl = publicUrl;
+        finalPhotoUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
-        // If replacing an existing photo, delete the old file to avoid duplicates
         try {
           const oldPath = extractFilePath(oldPhotoUrl);
           if (oldPath) {
