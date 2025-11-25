@@ -125,13 +125,13 @@ export default function AddCollegeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
-          <Button variant="blue" size="lg">
+          <Button className="cursor-pointer " variant="blue" size="lg">
             <Plus className="w-5 h-5" /> Add College
           </Button>
         </DialogTrigger>
       )}
 
-      <DialogContent className="glass2 sm:max-w-[425px] [&>button]:text-white">
+      <DialogContent className="glass2 sm:max-w-[425px] [&>button]:cursor-pointer [&>button]:text-white">
         <DialogHeader>
           <DialogTitle className="text-white">
             {editingCollege ? "Edit College" : "Add College"}
@@ -160,7 +160,12 @@ export default function AddCollegeDialog({
             placeholder="College Code"
             className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
-          <Button variant="blue" type="submit" disabled={loading}>
+          <Button
+            className="cursor-pointer"
+            variant="blue"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? "Saving..." : editingCollege ? "Update" : "Save"}
           </Button>
         </form>

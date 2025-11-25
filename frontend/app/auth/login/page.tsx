@@ -10,11 +10,9 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-// 🔑 Import the hook
 import { useLogin } from "./useLogin";
 
 export default function LoginPage() {
-  // 🔑 GET STATE AND HANDLER FROM HOOK
   const {
     username,
     setUsername,

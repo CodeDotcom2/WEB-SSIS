@@ -12,20 +12,23 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = useState(false);
   const { logoutUser } = useAuth();
-  const { notify } = useNotification();
+  const { notify, confirm } = useNotification();
 
   const handleLogout = async () => {
+    const ok = await confirm("Are you sure you want to log out?");
     setLoggingOut(true);
-    try {
-      await logoutUser();
-    } catch (error) {
-      console.error("Logout initiation error:", error);
-      notify("Error during logout initiation.", { type: "error" });
-    } finally {
-      setLoggingOut(false);
+    if (ok) {
+      try {
+        await logoutUser();
+        notify("Logged out successfully.", { type: "success" });
+      } catch (error) {
+        console.error("Logout initiation error:", error);
+        notify("Error during logout initiation.", { type: "error" });
+      } finally {
+        setLoggingOut(false);
+      }
     }
   };
-
   return (
     <aside className="glass p-4 pt-14 flex flex-col shadow-lg">
       <h1 className="text-xl font-bold mb-6 text-center text-white">
@@ -68,8 +71,8 @@ export default function Sidebar() {
       </div>
 
       <Button
-        className="p-8 mt-auto"
-        variant="destructive"
+        className="p-8 mt-auto cursor-pointer"
+        variant="deleteEffect"
         onClick={handleLogout}
         disabled={loggingOut}
       >

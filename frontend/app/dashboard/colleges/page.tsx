@@ -41,14 +41,12 @@ export default function CollegesPage() {
   const [open, setOpen] = useState(false);
   const [sortBy, setSortBy] = useState("Sort By");
   const [order, setOrder] = useState("Ascending");
-  // 🔑 GET TOKEN AND LOGOUT FUNCTION
   const { token, logoutUser } = useAuth();
   const { notify, confirm } = useNotification();
 
   async function fetchColleges() {
     setLoading(true);
 
-    // 🔑 GUARD
     if (!token) {
       setLoading(false);
       console.error("Token missing for protected route.");
@@ -61,14 +59,11 @@ export default function CollegesPage() {
         {
           method: "GET",
           headers: {
-            // 🔑 ADD TOKEN HEADER
             Authorization: `Bearer ${token}`,
           },
-          // ❌ REMOVE credentials: "include",
         }
       );
 
-      // 🔑 HANDLE 401
       if (res.status === 401) {
         console.error("Token expired or invalid. Logging out.");
         logoutUser();
@@ -103,7 +98,6 @@ export default function CollegesPage() {
     );
     if (!ok) return;
 
-    // 🔑 GUARD
     if (!token) {
       notify("Authentication required to delete college.", { type: "error" });
       return;
@@ -115,14 +109,11 @@ export default function CollegesPage() {
         {
           method: "DELETE",
           headers: {
-            // 🔑 ADD TOKEN HEADER
             Authorization: `Bearer ${token}`,
           },
-          // ❌ REMOVE credentials: "include",
         }
       );
 
-      // 🔑 HANDLE 401
       if (res.status === 401) {
         console.error("Token expired or invalid during delete. Logging out.");
         logoutUser();
@@ -144,7 +135,6 @@ export default function CollegesPage() {
     }
   }
 
-  // 🔑 Only fetch when the token is available
   useEffect(() => {
     if (token) {
       fetchColleges();
@@ -214,7 +204,7 @@ export default function CollegesPage() {
           <div className="flex gap-2 mb-2">
             {/* Sort By */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -231,7 +221,7 @@ export default function CollegesPage() {
 
             {/* Order */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {order}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -274,7 +264,7 @@ export default function CollegesPage() {
                 paginatedColleges.map((c, i) => (
                   <TableRow
                     key={i}
-                    className="border-0 group hover:bg-zinc-700/70"
+                    className="cursor-pointer border-0 group hover:bg-zinc-700/70"
                   >
                     <TableCell className="text-slate-200">
                       {c.college_code}
@@ -293,7 +283,7 @@ export default function CollegesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
+                        className="cursor-pointer flex items-center gap-1 text-blue-400 hover:text-blue-200"
                         onClick={() => {
                           setEditingCollege(c);
                           setOpen(true);
@@ -307,6 +297,7 @@ export default function CollegesPage() {
                         variant="deleteEffect"
                         size="sm"
                         onClick={() => deleteCollege(c.id, c.college_name)}
+                        className="cursor-pointer "
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -325,7 +316,7 @@ export default function CollegesPage() {
         </div>
       </main>
 
-      {/* Pagination (unchanged) */}
+      {/* Pagination */}
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -340,7 +331,7 @@ export default function CollegesPage() {
 
           {(() => {
             const pageNumbers = [];
-            const maxVisible = 4; // number of visible page buttons
+            const maxVisible = 4;
             let startPage = Math.max(
               1,
               currentPage - Math.floor(maxVisible / 2)
@@ -352,7 +343,6 @@ export default function CollegesPage() {
               startPage = Math.max(1, endPage - maxVisible + 1);
             }
 
-            // Show first page and ellipsis if needed
             if (startPage > 1) {
               pageNumbers.push(
                 <PaginationItem key={1}>
@@ -369,7 +359,6 @@ export default function CollegesPage() {
                 </PaginationItem>
               );
 
-              // Only show ellipsis if gap is larger than 1 page
               if (startPage > 2) {
                 pageNumbers.push(
                   <PaginationItem key="start-ellipsis">
@@ -379,7 +368,6 @@ export default function CollegesPage() {
               }
             }
 
-            // Visible range of pages
             for (let i = startPage; i <= endPage; i++) {
               pageNumbers.push(
                 <PaginationItem key={i}>
@@ -402,9 +390,7 @@ export default function CollegesPage() {
               );
             }
 
-            // Show ellipsis and last page if needed
             if (endPage < totalPages) {
-              // Only show ellipsis if more than one page gap
               if (endPage < totalPages - 1) {
                 pageNumbers.push(
                   <PaginationItem key="end-ellipsis">

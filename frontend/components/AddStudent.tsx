@@ -71,23 +71,104 @@ export default function AddStudentDialog({
   async function handleDeletePhoto() {
     const ok = await confirm("Are you sure you want to delete this photo?");
     if (!ok) return;
+
     const filePath = extractFilePath(formData.photo_url);
     if (!filePath) {
       notify("Could not determine photo path.", { type: "error" });
       return;
     }
+
     try {
-      const { error } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from("student-avatars")
         .remove([filePath]);
-      if (error) throw error;
-      notify("Photo deleted.", { type: "success" });
+
+      if (storageError) throw storageError;
+
+      if (editingStudent) {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/students/${editingStudent.id_number}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              ...formData,
+              photo_url: "",
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to update database");
+        }
+      }
+
+      notify("Photo deleted successfully.", { type: "success" });
       setFormData((prev) => ({ ...prev, photo_url: "" }));
       setImagePreview(null);
       setSelectedFile(null);
+
+      if (editingStudent && onStudentUpdated) {
+        onStudentUpdated();
+      }
     } catch (err) {
       console.error("Error deleting photo:", err);
       notify("Failed to delete photo.", { type: "error" });
+    }
+  }
+
+  async function deleteExistingAvatarsByIdNumber(idNumber: string) {
+    try {
+      console.log(`🔍 Checking for existing avatars with ID: ${idNumber}`);
+      const { data: allFiles, error: listError } = await supabase.storage
+        .from("student-avatars")
+        .list("", { limit: 1000 });
+
+      if (listError) {
+        console.error("❌ Error listing files:", listError);
+        return;
+      }
+
+      if (!allFiles || allFiles.length === 0) {
+        console.log("📁 No files found in bucket");
+        return;
+      }
+
+      const filesToDelete = allFiles
+        .filter((file) => {
+          const fileNameWithoutExt = file.name.split(".")[0];
+          return fileNameWithoutExt === idNumber;
+        })
+        .map((file) => file.name);
+
+      if (filesToDelete.length > 0) {
+        console.log(
+          `🗑️  Found ${filesToDelete.length} file(s) to delete for ID ${idNumber}:`,
+          filesToDelete
+        );
+
+        const { error: deleteError } = await supabase.storage
+          .from("student-avatars")
+          .remove(filesToDelete);
+
+        if (deleteError) {
+          console.error("❌ Error deleting existing avatars:", deleteError);
+          throw deleteError;
+        }
+
+        console.log(
+          `✅ Successfully deleted ${filesToDelete.length} file(s) with ID ${idNumber}`
+        );
+      } else {
+        console.log(`✅ No existing files found for ID ${idNumber}`);
+      }
+    } catch (error) {
+      console.error("❌ Error in deleteExistingAvatarsByIdNumber:", error);
+      throw error;
     }
   }
 
@@ -298,35 +379,21 @@ export default function AddStudentDialog({
     }
 
     let finalPhotoUrl = formData.photo_url;
-
     if (selectedFile) {
       setIsUploading(true);
       try {
-        const oldPhotoUrl = formData.photo_url;
+        console.log("Step 1: Deleting existing avatars...");
+        await deleteExistingAvatarsByIdNumber(formData.id_number);
         const fileExt = selectedFile.name.split(".").pop();
         const fileName = `${formData.id_number}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const { data: existingFiles } = await supabase.storage
-          .from("student-avatars")
-          .list("", { search: formData.id_number });
-
-        if (existingFiles && existingFiles.length > 0) {
-          const filesToDelete = existingFiles
-            .filter((f) => f.name.startsWith(`${formData.id_number}.`))
-            .map((f) => f.name);
-
-          if (filesToDelete.length > 0) {
-            await supabase.storage
-              .from("student-avatars")
-              .remove(filesToDelete);
-          }
-        }
+        console.log(`Step 2: Uploading new avatar as: ${filePath}`);
 
         const { error: uploadError } = await supabase.storage
           .from("student-avatars")
           .upload(filePath, selectedFile, {
-            upsert: true,
+            upsert: true, // Overwrite if file exists (backup safety)
           });
 
         if (uploadError) {
@@ -340,20 +407,15 @@ export default function AddStudentDialog({
           throw uploadError;
         }
 
+        console.log("✓ Upload successful!");
+
         const {
           data: { publicUrl },
         } = supabase.storage.from("student-avatars").getPublicUrl(filePath);
 
         finalPhotoUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
-        try {
-          const oldPath = extractFilePath(oldPhotoUrl);
-          if (oldPath) {
-            await supabase.storage.from("student-avatars").remove([oldPath]);
-          }
-        } catch (e) {
-          console.warn("Failed to delete old photo after replacement:", e);
-        }
+        console.log("✓ New photo URL generated:", finalPhotoUrl);
       } catch (error) {
         console.error("Error uploading image:", error);
         notify("Failed to upload image. Please try again.", { type: "error" });
@@ -387,11 +449,11 @@ export default function AddStudentDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        notify(data.error || "Failed to add student.", { type: "error" });
+        notify(data.error || "Failed to save student.", { type: "error" });
         return;
       }
 
-      notify(data.message || "Student added successfully!", {
+      notify(data.message || "Student saved successfully!", {
         type: "success",
       });
 
@@ -414,7 +476,7 @@ export default function AddStudentDialog({
       }
 
       // Close dialog
-      onOpenChange?.(false);
+      handleOpenChange(false);
     } catch (err) {
       console.error("Error saving student:", err);
       notify("Something went wrong while saving the student.", {
@@ -433,14 +495,14 @@ export default function AddStudentDialog({
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
-          <Button variant="blue" size="lg">
+          <Button className="cursor-pointer" variant="blue" size="lg">
             <UserRoundPlus className="w-5 h-5" />
             Add Student
           </Button>
         </DialogTrigger>
       )}
 
-      <DialogContent className="glass2 sm:max-w-fit [&>button]:text-white">
+      <DialogContent className="glass2 sm:max-w-fit [&>button]:cursor-pointer [&>button]:text-white">
         <DialogHeader>
           <DialogTitle className="text-white">{getDialogTitle()}</DialogTitle>
           <DialogDescription>
@@ -542,7 +604,7 @@ export default function AddStudentDialog({
               onChange={handleChange}
               required
               disabled={isViewMode}
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="cursor-pointer border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option value="" disabled hidden>
                 Select Gender
@@ -561,7 +623,7 @@ export default function AddStudentDialog({
               onChange={handleChange}
               required
               disabled={isViewMode}
-              className="border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="cursor-pointer border border-gray-400 rounded-lg px-4 py-2 flex-1 min-w-[180px] bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option value="" disabled hidden>
                 Select Year Level
@@ -595,7 +657,7 @@ export default function AddStudentDialog({
               }}
               required
               disabled={isViewMode}
-              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="cursor-pointer border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option
                 className="bg-gray-900 text-white"
@@ -622,7 +684,7 @@ export default function AddStudentDialog({
               onChange={handleChange}
               required
               disabled={isViewMode}
-              className="border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="cursor-pointer border border-gray-400 rounded-lg px-4 py-2 w-60 bg-transparent focus:border-white focus:outline-none text-gray-400 invalid:text-gray-400 valid:text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <option
                 value=""
@@ -653,13 +715,18 @@ export default function AddStudentDialog({
                   e.preventDefault();
                   setIsViewMode(false);
                 }}
-                className="flex items-center gap-2"
+                className="cursor-pointer flex items-center gap-2"
               >
-                <Pencil className="w-4 h-4" />
+                <Pencil className="cursor-pointer w-4 h-4" />
                 Edit
               </Button>
             ) : (
-              <Button variant="blue" type="submit" disabled={isUploading}>
+              <Button
+                className="cursor-pointer "
+                variant="blue"
+                type="submit"
+                disabled={isUploading}
+              >
                 {isUploading
                   ? "Uploading..."
                   : editingStudent

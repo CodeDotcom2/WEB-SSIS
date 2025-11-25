@@ -27,7 +27,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import AddProgramDialog from "@/components/AddProgram";
-// 🔑 IMPORT useAuth
+
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useNotification } from "@/app/contexts/NotificationContext";
 
@@ -39,7 +39,7 @@ export default function ProgramsPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("Sort By");
   const [order, setOrder] = useState("Ascending");
-  // 🔑 GET TOKEN AND LOGOUT FUNCTION
+
   const { token, logoutUser } = useAuth();
   const { notify, confirm } = useNotification();
 
@@ -50,7 +50,6 @@ export default function ProgramsPage() {
   async function fetchPrograms() {
     setLoading(true);
 
-    // 🔑 GUARD
     if (!token) {
       setLoading(false);
       console.error("Token missing for protected route.");
@@ -63,16 +62,14 @@ export default function ProgramsPage() {
         {
           method: "GET",
           headers: {
-            // 🔑 ADD TOKEN HEADER
             Authorization: `Bearer ${token}`,
           },
-          // ❌ REMOVE credentials: "include",
         }
       );
 
-      // 🔑 HANDLE 401
       if (res.status === 401) {
         console.error("Token expired or invalid. Logging out.");
+        notify("Session expired. Please log in again.", { type: "error" });
         logoutUser();
         return;
       }
@@ -80,7 +77,6 @@ export default function ProgramsPage() {
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         console.error("fetchPrograms non-OK response:", res.status, errBody);
-        // If backend returned an object (error), coerce to empty list
         setPrograms([]);
         return;
       }
@@ -106,7 +102,6 @@ export default function ProgramsPage() {
     );
     if (!ok) return;
 
-    // 🔑 GUARD
     if (!token) {
       notify("Authentication required to delete program.", { type: "error" });
       return;
@@ -118,16 +113,14 @@ export default function ProgramsPage() {
         {
           method: "DELETE",
           headers: {
-            // 🔑 ADD TOKEN HEADER
             Authorization: `Bearer ${token}`,
           },
-          // ❌ REMOVE credentials: "include",
         }
       );
 
-      // 🔑 HANDLE 401
       if (res.status === 401) {
         console.error("Token expired or invalid during delete. Logging out.");
+        notify("Session expired. Please log in again.", { type: "error" });
         logoutUser();
         return;
       }
@@ -147,7 +140,6 @@ export default function ProgramsPage() {
     }
   }
 
-  // 🔑 Only fetch when the token is available
   useEffect(() => {
     if (token) {
       fetchPrograms();
@@ -215,7 +207,7 @@ export default function ProgramsPage() {
           <div className="flex gap-2 mb-2">
             {/* Sort By */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -232,7 +224,7 @@ export default function ProgramsPage() {
 
             {/* Order */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {order}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -271,7 +263,7 @@ export default function ProgramsPage() {
                 paginatedPrograms.map((p, i) => (
                   <TableRow
                     key={i}
-                    className="border-0 group hover:bg-zinc-700/70"
+                    className="cursor-pointer border-0 group hover:bg-zinc-700/70"
                   >
                     <TableCell className="text-slate-200">
                       {p.program_code}
@@ -294,7 +286,7 @@ export default function ProgramsPage() {
                           setEditingProgram(p);
                           setOpen(true);
                         }}
-                        className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
+                        className="cursor-pointer flex items-center gap-1 text-blue-400 hover:text-blue-200"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -304,7 +296,7 @@ export default function ProgramsPage() {
                         variant="deleteEffect"
                         size="sm"
                         onClick={() => deleteProgram(p.id, p.program_name)}
-                        className="flex items-center gap-1"
+                        className="cursor-pointer flex items-center gap-1"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -338,7 +330,7 @@ export default function ProgramsPage() {
         />
       )}
 
-      {/* Pagination (unchanged) */}
+      {/* Pagination */}
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -353,7 +345,7 @@ export default function ProgramsPage() {
 
           {(() => {
             const pageNumbers = [];
-            const maxVisible = 4; // number of visible page buttons
+            const maxVisible = 4;
             let startPage = Math.max(
               1,
               currentPage - Math.floor(maxVisible / 2)
@@ -365,7 +357,6 @@ export default function ProgramsPage() {
               startPage = Math.max(1, endPage - maxVisible + 1);
             }
 
-            // Show first page and ellipsis if needed
             if (startPage > 1) {
               pageNumbers.push(
                 <PaginationItem key={1}>
@@ -382,7 +373,6 @@ export default function ProgramsPage() {
                 </PaginationItem>
               );
 
-              // Only show ellipsis if gap is larger than 1 page
               if (startPage > 2) {
                 pageNumbers.push(
                   <PaginationItem key="start-ellipsis">
@@ -392,7 +382,6 @@ export default function ProgramsPage() {
               }
             }
 
-            // Visible range of pages
             for (let i = startPage; i <= endPage; i++) {
               pageNumbers.push(
                 <PaginationItem key={i}>
@@ -415,9 +404,7 @@ export default function ProgramsPage() {
               );
             }
 
-            // Show ellipsis and last page if needed
             if (endPage < totalPages) {
-              // Only show ellipsis if more than one page gap
               if (endPage < totalPages - 1) {
                 pageNumbers.push(
                   <PaginationItem key="end-ellipsis">

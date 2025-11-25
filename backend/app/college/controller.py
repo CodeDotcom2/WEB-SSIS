@@ -4,7 +4,6 @@ from app.models import College, Program, Student
 from flask_jwt_extended import jwt_required
 
 
-# GET /dashboard/colleges
 @college_bp.route("/colleges", methods=["GET"], strict_slashes=False)
 @jwt_required()
 def get_colleges():
@@ -28,7 +27,6 @@ def get_colleges():
 
     return jsonify({"colleges": college_list})
 
-# POST /dashboard/colleges
 @college_bp.route("/colleges", methods=["POST"])
 @jwt_required()
 def add_college():
@@ -72,7 +70,6 @@ def add_college():
         }
     }),201
 
-# DELETE /dashboard/colleges/<college_id>
 @college_bp.route("/colleges/<int:college_id>", methods=["DELETE"])
 @jwt_required()
 def delete_college(college_id):
@@ -81,8 +78,6 @@ def delete_college(college_id):
         return jsonify({"message": msg})
     return jsonify({"error": msg}), 404
 
-
-# PUT /dashboard/colleges/<college_id>
 @college_bp.route("/colleges/<int:college_id>", methods=["PUT"])
 @jwt_required()
 def update_college(college_id):

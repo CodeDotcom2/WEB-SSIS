@@ -33,11 +33,9 @@ def add_student():
         if not data.get(field):
             return jsonify({"error": f"'{field}' is required"}), 400
 
-    # Validate names
     if not re.match(name_regex, data["first_name"]) or not re.match(name_regex, data["last_name"]):
         return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
-    # Validate ID format
     if not re.match(id_regex, data["id_number"]):
         return jsonify({"error": "ID number must follow the format XXXX-XXXX (digits only)"}), 400
     

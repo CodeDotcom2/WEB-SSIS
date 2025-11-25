@@ -164,13 +164,13 @@ export default function AddProgramDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
-          <Button variant="blue" size="lg">
+          <Button className="cursor-pointer " variant="blue" size="lg">
             <Plus className="w-5 h-5" /> Add Program
           </Button>
         </DialogTrigger>
       )}
 
-      <DialogContent className="glass2 sm:max-w-[425px] [&>button]:text-white">
+      <DialogContent className="glass2 sm:max-w-[425px] [&>button]:cursor-pointer [&>button]:text-white">
         <DialogHeader>
           <DialogTitle className="text-white">
             {editingProgram ? "Edit Program" : "Add Program"}
@@ -204,7 +204,7 @@ export default function AddProgramDialog({
             value={formData.college_id}
             onChange={handleChange}
             required
-            className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
+            className="cursor-pointer border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-gray-400 invalid:text-gray-400 valid:text-white"
           >
             <option value="" disabled hidden>
               Select College
@@ -219,7 +219,12 @@ export default function AddProgramDialog({
               </option>
             ))}
           </select>
-          <Button variant="blue" type="submit" disabled={loading}>
+          <Button
+            className="cursor-pointer"
+            variant="blue"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? "Saving..." : editingProgram ? "Update" : "Save"}
           </Button>
         </form>

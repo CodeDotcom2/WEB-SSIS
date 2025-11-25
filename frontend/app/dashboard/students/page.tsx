@@ -113,11 +113,9 @@ export default function StudentsPage() {
       }
 
       if (res.ok) {
-        // attempt to delete stored photo if exists
         try {
           const student = students.find((s) => s.id_number === id_number);
           if (student?.photo_url) {
-            // extract file path from URL
             const extractFilePath = (url?: string | null) => {
               if (!url) return null;
               try {
@@ -245,7 +243,7 @@ export default function StudentsPage() {
           <div className="flex gap-2 mb-2">
             {/* Sort By */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {sortBy}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -264,7 +262,7 @@ export default function StudentsPage() {
 
             {/* Order */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
+              <DropdownMenuTrigger className="cursor-pointer whitespace-nowrap px-4 py-2 border rounded-md text-sm text-slate-100 border-white/10 bg-transparent">
                 {order}
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -306,7 +304,7 @@ export default function StudentsPage() {
                   className="border-0 group hover:bg-zinc-700/70 cursor-pointer"
                   onClick={() => {
                     setEditingStudent(s);
-                    setViewMode(true); // VIEW MODE
+                    setViewMode(true);
                     setOpen(true);
                   }}
                 >
@@ -340,7 +338,7 @@ export default function StudentsPage() {
                         setViewMode(false);
                         setOpen(true);
                       }}
-                      className="flex items-center gap-1 text-blue-400 hover:text-blue-200"
+                      className="cursor-pointer flex items-center gap-1 text-blue-400 hover:text-blue-200"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -350,7 +348,7 @@ export default function StudentsPage() {
                       variant="deleteEffect"
                       size="sm"
                       onClick={() => deleteStudent(s.id_number)}
-                      className="flex items-center gap-1"
+                      className="cursor-pointer flex items-center gap-1"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
