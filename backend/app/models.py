@@ -428,3 +428,53 @@ class Student:
         result = cursor.fetchone()
         cursor.close()
         return result is not None
+
+    @staticmethod
+    def get_year_levels():
+        db = get_db()
+        if db is None:
+            raise Exception("Database connection failed")
+            
+        cursor = db.cursor()
+        try:
+            cursor.execute("""
+                SELECT DISTINCT year_level 
+                FROM students 
+                WHERE year_level IS NOT NULL 
+                ORDER BY year_level
+            """)
+            result = cursor.fetchall()
+            
+            year_levels = []
+            for row in result:
+                val = row[0]
+                try:
+                    year_levels.append(int(val))
+                except (ValueError, TypeError):
+                    if val: year_levels.append(str(val))
+            
+            return sorted(list(set(year_levels)))
+        except Exception as e:
+            print(f"Database Query Error: {e}") 
+            raise e
+        finally:
+            cursor.close()
+
+
+
+    @staticmethod
+    def get_genders():
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute("""
+            SELECT DISTINCT gender
+            FROM students
+            WHERE gender IS NOT NULL
+            ORDER BY gender
+        """)
+
+        result = cursor.fetchall()
+        cursor.close()
+
+        return sorted({row[0].strip().lower() for row in result if row[0]})

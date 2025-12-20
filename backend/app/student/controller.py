@@ -9,6 +9,25 @@ def list_students():
     students = models.Student.all()
     return jsonify([s.__dict__ for s in students])
 
+@student_bp.route("/students/year-levels", methods=["GET"])
+@jwt_required()
+def get_year_levels():
+    try:
+        year_levels = models.Student.get_year_levels()
+        return jsonify(year_levels), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@student_bp.route("/students/genders", methods=["GET"])
+@jwt_required()
+def get_genders():
+    """Get distinct genders from students"""
+    try:
+        genders = models.Student.get_genders()
+        return jsonify(genders), 200
+    except Exception as e:
+        print(f"Error fetching genders: {e}")
+        return jsonify({"error": "Failed to fetch genders"}), 500
 
 @student_bp.route("/students", methods=["POST"])
 @jwt_required()
@@ -53,7 +72,6 @@ def add_student():
         "message": "Student added successfully",
         "student":{
             "id_number": student.id_number,
-            "id_number": student.id_number,
             "last_name": student.last_name,
             "first_name": student.first_name,
             "gender": student.gender,
@@ -89,6 +107,3 @@ def update_student(id_number):
     if success:
         return jsonify({"message": f"Student {id_number} updated successfully"}), 200
     return jsonify({"error": f"Failed to update student {id_number}"}), 400
-
-
-
