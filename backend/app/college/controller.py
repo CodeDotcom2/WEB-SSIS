@@ -31,7 +31,6 @@ def get_colleges():
 @jwt_required()
 def add_college():
     import re
-    from app.database import get_db
     
     data = request.json
     college_code = data.get("college_code").strip()
@@ -44,13 +43,7 @@ def add_college():
     if not re.match(name_regex, data["college_name"]) or not re.match(name_regex, data["college_code"]):
         return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT college_name FROM colleges WHERE LOWER(college_name) = %s", (college_name,))
-    existing = cursor.fetchone()
-    cursor.close()
-
-    if existing:
+    if College.exists(college_name):
         return jsonify({"error": "College already exists"}), 400
     
     formatted_name =  data["college_name"].strip().title()
@@ -95,14 +88,8 @@ def update_college(college_id):
     if not re.match(name_regex, data["college_name"]) or not re.match(name_regex, data["college_code"]):
         return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT college_name FROM colleges WHERE LOWER(college_name) = %s AND id != %s",(college_name, college_id),)
-    existing = cursor.fetchone()
-    cursor.close()
-
-    if existing:
-        return jsonify({"error": "College already exists"}), 400
+    if College.is_name_taken(college_name, college_id):
+        return jsonify({"error": "College name already taken by another college"}), 400
 
     formatted_name =  data["college_name"].strip().title()
 
@@ -116,5 +103,3 @@ def update_college(college_id):
                 "college_name": formatted_name
             }}), 200
     return jsonify({"error": "Failed to update college"}), 400
-
-

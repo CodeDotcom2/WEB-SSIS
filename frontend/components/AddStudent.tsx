@@ -304,10 +304,10 @@ export default function AddStudentDialog({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      const validTypes = ["image/jpeg", "image/png", "image/jpg"];
 
       if (!validTypes.includes(file.type)) {
-        notify("Invalid file type. Please upload a JPG, PNG, or WEBP image.", {
+        notify("Invalid file type. Please upload a JPG, PNG, or JPEG image.", {
           type: "error",
         });
         e.target.value = "";

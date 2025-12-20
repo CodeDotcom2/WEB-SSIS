@@ -15,16 +15,7 @@ def list_students():
 def add_student():
     data = request.get_json()
     import re
-    from app.database import get_db
     
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT id_number FROM students WHERE id_number = %s", (data["id_number"],))
-    existing = cursor.fetchone()
-    cursor.close()
-
-    if existing:
-        return jsonify({"error": "ID number already exists"}), 400
     name_regex = r"^[A-Za-z\s]+$"
     id_regex = r"^\d{4}-\d{4}$"
     
@@ -38,6 +29,9 @@ def add_student():
 
     if not re.match(id_regex, data["id_number"]):
         return jsonify({"error": "ID number must follow the format XXXX-XXXX (digits only)"}), 400
+    
+    if models.Student.exists(data["id_number"]):
+        return jsonify({"error": "ID number already exists"}), 400
     
 
     formatted_Lastname = data["last_name"].strip().title()

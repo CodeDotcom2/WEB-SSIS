@@ -26,7 +26,6 @@ def get_programs():
 @jwt_required()
 def add_program():
     import re
-    from app.database import get_db
     try:
         data = request.get_json(force=True)  
         program_code = data.get("program_code").strip()
@@ -40,14 +39,8 @@ def add_program():
         if not re.match(name_regex, data["program_name"]) or not re.match(name_regex, data["program_code"]):
             return jsonify({"error": "Names should contain only letters and spaces"}), 400
 
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT program_name FROM programs WHERE LOWER(program_name) = %s", (program_name,))
-        existing = cursor.fetchone()
-        cursor.close()
-
-        if existing:
-            return jsonify({"error": "Program already exists"}), 400
+        if Program.exists(program_name):
+            return jsonify({"error": "Program name already exists"}), 400
         
         formatted_name =  data["program_name"].strip().title()
 
@@ -86,7 +79,6 @@ def delete_program(program_id):
 @jwt_required()
 def update_program(program_id):
     import re
-    from app.database import get_db
     try:
         data = request.get_json(force=True)
         program_code = data.get("program_code")
@@ -100,13 +92,8 @@ def update_program(program_id):
         if not re.match(name_regex, data["program_name"]) or not re.match(name_regex, data["program_code"]):
             return jsonify({"error": "Names should contain only letters and spaces"}), 400
         
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT program_name FROM programs WHERE LOWER(program_name) = %s AND id != %s",(program_name, program_id),)
-        existing = cursor.fetchone()
-        cursor.close()
-        
-        if existing:
+
+        if Program.is_name_taken(program_name, program_id):
             return jsonify({"error": "Program name already exists"}), 400
 
         formatted_name =  data["program_name"].strip().title()

@@ -182,6 +182,27 @@ class College:
             cursor.close()
             print(f"Error updating college: {e}")
             return False
+        
+    @staticmethod
+    def exists(college_name):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT college_name FROM colleges WHERE LOWER(college_name) = LOWER(%s)", (college_name,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result is not None
+    
+    @staticmethod
+    def is_name_taken(college_name, exclude_id):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT id FROM colleges WHERE LOWER(college_name) = LOWER(%s) AND id != %s", 
+            (college_name, exclude_id)
+        )
+        res = cursor.fetchone()
+        cursor.close()
+        return res is not None
 
 
 
@@ -281,6 +302,26 @@ class Program:
             cursor.close()
             print(f"Error updating program: {e}")
             return False
+    @staticmethod
+    def exists(program_name):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT program_name FROM programs WHERE LOWER(program_name) = LOWER(%s)", (program_name,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result is not None
+    
+    @staticmethod
+    def is_name_taken(program_name, exclude_id):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT id FROM programs WHERE LOWER(program_name) = LOWER(%s) AND id != %s",
+            (program_name, exclude_id)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        return result is not None
 
 
 
@@ -379,3 +420,11 @@ class Student:
             for row in result
         ]
 
+    @staticmethod
+    def exists(id_number):
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id_number FROM students WHERE id_number = %s", (id_number,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result is not None
